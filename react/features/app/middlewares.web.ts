@@ -1,3 +1,4 @@
+import '../account/middleware.web';
 import '../base/app/middleware';
 import '../base/jwt/middleware.web';
 import '../base/config/middleware';

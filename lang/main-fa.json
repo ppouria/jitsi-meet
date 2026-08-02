@@ -1,4 +1,32 @@
 {
+    "account": {
+        "avatar": "تصویر پروفایل",
+        "avatarAlt": "تصویر پروفایل شما",
+        "avatarInvalid": "یک تصویر PNG، JPEG، WebP یا GIF کوچک‌تر از ۷۶۸ کیلوبایت انتخاب کنید.",
+        "bio": "درباره من",
+        "closeRoom": "بستن اتاق",
+        "closeRoomConfirm": "این اتاق برای همه بسته شود؟",
+        "createAccount": "ساخت حساب",
+        "email": "ایمیل",
+        "loading": "در حال بارگذاری حساب…",
+        "login": "ورود",
+        "loginHelp": "برای استفاده از پروفایل ذخیره‌شده و تاریخچهٔ اتاق‌ها وارد شوید.",
+        "loginIdentifier": "نام کاربری یا ایمیل",
+        "loginOrSignup": "ورود یا ثبت‌نام",
+        "logout": "خروج",
+        "nickname": "نام نمایشی",
+        "noStats": "هنوز زمانی برای اتاق‌ها ثبت نشده است.",
+        "password": "رمز عبور",
+        "profileSaved": "پروفایل ذخیره شد.",
+        "recentRoomTime": "زمان حضور اخیر در اتاق‌ها",
+        "removeAvatar": "حذف تصویر",
+        "requestFailed": "درخواست حساب با خطا مواجه شد.",
+        "roomOwner": "کنترل‌های مالک اتاق",
+        "saveProfile": "ذخیره پروفایل",
+        "signup": "ثبت‌نام",
+        "title": "حساب کاربری",
+        "username": "نام کاربری"
+    },
     "addPeople": {
         "accessibilityLabel": {
             "meetingLink": "لینک جلسه: {{url}}"

@@ -1,5 +1,6 @@
 // @ts-expect-error
 import { API_ID } from '../../../modules/API';
+import { prepareAccountRoom } from '../account/actions.web';
 import { setRoom } from '../base/conference/actions';
 import {
     configWillLoad,
@@ -90,6 +91,13 @@ export function appNavigate(uri?: string) {
         }
 
         dispatch(setConfig(config));
+
+        if (room && !(await prepareAccountRoom(dispatch, getState, config, room))) {
+            dispatch(setRoom(undefined));
+
+            return;
+        }
+
         dispatch(setRoom(room));
     };
 }

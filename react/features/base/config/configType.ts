@@ -192,6 +192,7 @@ export interface IConfig {
     _desktopSharingSourceDevice?: string;
     _immediateReloadThreshold?: string;
     _screenshotHistoryRegionUrl?: number;
+    accountServiceUrl?: string;
     analytics?: {
         amplitudeAPPKey?: string;
         blackListedEvents?: string[];

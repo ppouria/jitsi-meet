@@ -16,6 +16,7 @@ export default [
     '_desktopSharingSourceDevice',
     '_peerConnStatusOutOfLastNTimeout',
     '_peerConnStatusRtcMuteTimeout',
+    'accountServiceUrl',
     'analytics.disabled',
     'analytics.rtcstatsEnabled',
     'analytics.watchRTCEnabled',

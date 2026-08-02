@@ -1,4 +1,5 @@
 import { IStore } from '../app/types';
+import { getCurrentConference } from '../base/conference/functions';
 import { pinParticipant } from '../base/participants/actions';
 import {
     getLocalParticipant,
@@ -16,6 +17,7 @@ import {
     SET_FILMSTRIP_HEIGHT,
     SET_FILMSTRIP_WIDTH,
     SET_HORIZONTAL_VIEW_DIMENSIONS,
+    SET_PERSONAL_AUDIO_MUTE,
     SET_SCREENSHARE_FILMSTRIP_PARTICIPANT,
     SET_SCREENSHARING_TILE_DIMENSIONS,
     SET_STAGE_FILMSTRIP_DIMENSIONS,
@@ -55,6 +57,7 @@ import {
     isStageFilmstripAvailable,
     isStageFilmstripTopPanel
     , showGridInVerticalView } from './functions.web';
+import { PERSONAL_AUDIO_MUTE_MESSAGE, PersonalAudioMuteDirection } from './personalAudioMute';
 
 export * from './actions.any';
 
@@ -390,6 +393,49 @@ export function setVolume(participantId: string, volume: number) {
         type: SET_VOLUME,
         participantId,
         volume
+    };
+}
+
+/**
+ * Sets one direction of the personal audio mute state for a participant.
+ *
+ * @param {string} participantId - The participant ID.
+ * @param {PersonalAudioMuteDirection} direction - The direction being changed.
+ * @param {boolean} muted - Whether audio is muted.
+ * @returns {Object}
+ */
+export function setPersonalAudioMute(
+        participantId: string,
+        direction: PersonalAudioMuteDirection,
+        muted: boolean) {
+    return {
+        type: SET_PERSONAL_AUDIO_MUTE,
+        direction,
+        muted,
+        participantId
+    };
+}
+
+/**
+ * Asks one participant to stop or resume hearing the local participant.
+ *
+ * @param {string} participantId - The recipient participant ID.
+ * @param {boolean} muted - Whether the recipient should mute the local participant.
+ * @returns {Function}
+ */
+export function setPersonalAudioMuteForParticipant(participantId: string, muted: boolean) {
+    return (dispatch: IStore['dispatch'], getState: IStore['getState']) => {
+        const conference = getCurrentConference(getState());
+
+        if (!conference) {
+            return;
+        }
+
+        conference.sendEndpointMessage(participantId, {
+            name: PERSONAL_AUDIO_MUTE_MESSAGE,
+            muted
+        });
+        dispatch(setPersonalAudioMute(participantId, 'forParticipant', muted));
     };
 }
 

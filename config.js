@@ -25,6 +25,9 @@ if (subdomain.startsWith('<!--')) {
 var enableJaaS = false;
 
 var config = {
+    // Same-origin account API used by the native login/profile UI.
+    accountServiceUrl: '/account/api',
+
     // Connection
     //
 

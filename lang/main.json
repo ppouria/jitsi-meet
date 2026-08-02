@@ -1,4 +1,32 @@
 {
+    "account": {
+        "avatar": "Profile picture",
+        "avatarAlt": "Your profile picture",
+        "avatarInvalid": "Choose a PNG, JPEG, WebP, or GIF image smaller than 768 KB.",
+        "bio": "Biography",
+        "closeRoom": "Close room",
+        "closeRoomConfirm": "Close this room for everyone?",
+        "createAccount": "Create account",
+        "email": "Email",
+        "loading": "Loading account…",
+        "login": "Log in",
+        "loginHelp": "Log in to use your saved profile and room history.",
+        "loginIdentifier": "Username or email",
+        "loginOrSignup": "Log in or sign up",
+        "logout": "Log out",
+        "nickname": "Nickname",
+        "noStats": "No room time recorded yet.",
+        "password": "Password",
+        "profileSaved": "Profile saved.",
+        "recentRoomTime": "Recent room time",
+        "removeAvatar": "Remove picture",
+        "requestFailed": "The account request failed.",
+        "roomOwner": "Room owner controls",
+        "saveProfile": "Save profile",
+        "signup": "Sign up",
+        "title": "Account",
+        "username": "Username"
+    },
     "addPeople": {
         "accessibilityLabel": {
             "meetingLink": "Meeting link: {{url}}"

@@ -1,6 +1,7 @@
 import { AnyAction } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 
+import { IAccountState } from '../account/reducer';
 import { IAnalyticsState } from '../analytics/reducer';
 import { IAudioTranslationState } from '../audio-translation/reducer';
 import { IAuthenticationState } from '../authentication/reducer';
@@ -93,6 +94,7 @@ export interface IStore {
 }
 
 export interface IReduxState {
+    'features/account': IAccountState;
     'features/analytics': IAnalyticsState;
     'features/audio-translation': IAudioTranslationState;
     'features/authentication': IAuthenticationState;

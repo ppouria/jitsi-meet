@@ -4,9 +4,10 @@ import { WithTranslation } from 'react-i18next';
 import { connect } from 'react-redux';
 import { withStyles } from 'tss-react/mui';
 
+import AccountProfile from '../../../account/components/web/AccountProfile';
 import { createProfilePanelButtonEvent } from '../../../analytics/AnalyticsEvents';
 import { sendAnalytics } from '../../../analytics/functions';
-import { IStore } from '../../../app/types';
+import { IReduxState, IStore } from '../../../app/types';
 import { login, logout } from '../../../authentication/actions.web';
 import Avatar from '../../../base/avatar/components/Avatar';
 import AbstractDialogTab, {
@@ -19,6 +20,11 @@ import Input from '../../../base/ui/components/web/Input';
  * The type of the React {@code Component} props of {@link ProfileTab}.
  */
 export interface IProps extends AbstractDialogTabProps, WithTranslation {
+
+    /**
+     * Whether the native account service is configured.
+     */
+    accountEnabled: boolean;
 
     /**
      * Whether server-side authentication is available.
@@ -154,6 +160,7 @@ class ProfileTab extends AbstractDialogTab<IProps, any> {
      */
     override render() {
         const {
+            accountEnabled,
             authEnabled,
             displayName,
             email,
@@ -163,6 +170,10 @@ class ProfileTab extends AbstractDialogTab<IProps, any> {
             t
         } = this.props;
         const classes = withStyles.getClasses(this.props);
+
+        if (accountEnabled) {
+            return <AccountProfile />;
+        }
 
         return (
             <div className = { classes.container } >
@@ -248,4 +259,8 @@ class ProfileTab extends AbstractDialogTab<IProps, any> {
     }
 }
 
-export default withStyles(translate(connect()(ProfileTab)), styles);
+const mapStateToProps = (state: IReduxState) => ({
+    accountEnabled: Boolean(state['features/base/config'].accountServiceUrl)
+});
+
+export default withStyles(translate(connect(mapStateToProps)(ProfileTab)), styles);

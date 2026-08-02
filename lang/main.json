@@ -21,6 +21,7 @@
         "recentRoomTime": "Recent room time",
         "removeAvatar": "Remove picture",
         "requestFailed": "The account request failed.",
+        "roomAlreadyOpen": "This browser is already connected to this room.",
         "roomOwner": "Room owner controls",
         "saveProfile": "Save profile",
         "signup": "Sign up",

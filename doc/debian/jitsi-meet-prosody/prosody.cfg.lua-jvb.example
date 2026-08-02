@@ -67,6 +67,7 @@ VirtualHost "jitmeet.example.com"
         "external_services";
         "features_identity";
         "conference_duration";
+        "muc_password_check";
         "muc_lobby_rooms";
         "muc_breakout_rooms";
     }

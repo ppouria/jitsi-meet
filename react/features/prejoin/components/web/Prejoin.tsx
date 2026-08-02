@@ -1,5 +1,5 @@
 /* eslint-disable react/jsx-no-bind */
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { connect, useDispatch } from 'react-redux';
 import { makeStyles } from 'tss-react/mui';
@@ -35,6 +35,7 @@ import {
     isPrejoinDisplayNameVisible
 } from '../../functions';
 import logger from '../../logger';
+import { IPrejoinParticipant, getRoomInfoURL, parsePrejoinParticipants } from '../../roomInfo';
 import { hasDisplayName } from '../../utils';
 
 import JoinByPhoneDialog from './dialogs/JoinByPhoneDialog';
@@ -72,6 +73,16 @@ interface IProps {
     joiningInProgress?: boolean;
 
     /**
+     * JWT used to securely query the room before joining.
+     */
+    jwt?: string;
+
+    /**
+     * Current meeting URL.
+     */
+    locationURL?: URL;
+
+    /**
      * The name of the user that is about to join.
      */
     name: string;
@@ -90,6 +101,11 @@ interface IProps {
      * Whether the name input should be read only or not.
      */
     readOnlyName: boolean;
+
+    /**
+     * The room about to be joined.
+     */
+    roomName?: string;
 
     /**
      * Sets visibility of the 'JoinByPhoneDialog'.
@@ -187,6 +203,55 @@ const useStyles = makeStyles()(theme => {
             width: '100%'
         },
 
+        participants: {
+            alignItems: 'center',
+            color: theme.palette.prejoinTitleText,
+            display: 'flex',
+            flexDirection: 'column',
+            marginBottom: theme.spacing(3),
+            textAlign: 'center'
+        },
+
+        participantAvatars: {
+            display: 'flex',
+            justifyContent: 'center',
+            marginBottom: theme.spacing(1),
+            paddingLeft: theme.spacing(1)
+        },
+
+        participantAvatar: {
+            border: `2px solid ${theme.palette.preMeetingBackground}`,
+            borderRadius: '50%',
+            marginLeft: `-${theme.spacing(1)}`
+        },
+
+        participantCount: {
+            ...theme.typography.bodyShortBold,
+            marginBottom: theme.spacing(1)
+        },
+
+        participantNames: {
+            ...theme.typography.bodyShortRegular,
+            color: theme.palette.prejoinRoomNameText,
+            maxWidth: '100%',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+        },
+
+        participantOverflow: {
+            alignItems: 'center',
+            background: theme.palette.ui03,
+            border: `2px solid ${theme.palette.preMeetingBackground}`,
+            borderRadius: '50%',
+            display: 'flex',
+            height: '36px',
+            justifyContent: 'center',
+            marginLeft: `-${theme.spacing(1)}`,
+            width: '36px',
+            ...theme.typography.labelBold
+        },
+
         dropdownButtons: {
             width: '300px',
             padding: '8px 0',
@@ -216,10 +281,13 @@ const Prejoin = ({
     joinConference,
     joinConferenceWithoutAudio,
     joiningInProgress,
+    jwt,
+    locationURL,
     name,
     participantId,
     prejoinConfig,
     readOnlyName,
+    roomName,
     setJoinByPhoneDialogVisiblity,
     showCameraPreview,
     showDialog,
@@ -236,10 +304,54 @@ const Prejoin = ({
     const showErrorOnField = useMemo(
         () => showDisplayNameField && showErrorOnJoin,
         [ showDisplayNameField, showErrorOnJoin ]);
+    const [ roomParticipants, setRoomParticipants ] = useState<IPrejoinParticipant[]>();
     const [ showJoinByPhoneButtons, setShowJoinByPhoneButtons ] = useState(false);
     const { classes } = useStyles();
     const { t } = useTranslation();
     const dispatch = useDispatch();
+
+    useEffect(() => {
+        if (!jwt || !locationURL || !roomName) {
+            return;
+        }
+
+        let mounted = true;
+        const loadParticipants = async () => {
+            try {
+                const response = await fetch(getRoomInfoURL(locationURL, roomName), {
+                    headers: {
+                        Authorization: `Bearer ${jwt}`
+                    }
+                });
+
+                if (response.status === 404) {
+                    mounted && setRoomParticipants([]);
+
+                    return;
+                }
+                if (!response.ok) {
+                    throw new Error(`Room info request failed (${response.status}).`);
+                }
+
+                const participants = parsePrejoinParticipants(await response.json());
+
+                if (mounted && participants) {
+                    setRoomParticipants(participants);
+                }
+            } catch (error) {
+                logger.warn('Unable to load prejoin participants.', error);
+            }
+        };
+
+        setRoomParticipants(undefined);
+        void loadParticipants();
+        const interval = window.setInterval(loadParticipants, 15000);
+
+        return () => {
+            mounted = false;
+            window.clearInterval(interval);
+        };
+    }, [ jwt, locationURL, roomName ]);
 
     /**
      * Handler for the join button.
@@ -400,6 +512,10 @@ const Prejoin = ({
         extraButtonsToRender = extraButtonsToRender.filter((btn: any) => btn.key !== 'by-phone');
     }
     const hasExtraJoinButtons = Boolean(extraButtonsToRender.length);
+    const visibleParticipants = roomParticipants?.slice(0, 5) ?? [];
+    const namedParticipants = roomParticipants?.slice(0, 3)
+        .map(participant => participant.displayName || t('prejoin.participantFallback')) ?? [];
+    const hiddenParticipantCount = (roomParticipants?.length ?? 0) - visibleParticipants.length;
 
     return (
         <PreMeetingScreen
@@ -446,6 +562,34 @@ const Prejoin = ({
                         {t('prejoin.errorMissingName')}
                     </p>
                 </div>}
+
+                {roomParticipants && <section
+                    aria-label = { roomParticipants.length
+                        ? t('prejoin.peopleAlreadyHere', { count: roomParticipants.length })
+                        : t('prejoin.noOneElseHere') }
+                    aria-live = 'polite'
+                    className = { classes.participants }
+                    data-testid = 'prejoin.participants'>
+                    {roomParticipants.length ? <>
+                        <div
+                            aria-hidden = 'true'
+                            className = { classes.participantAvatars }>
+                            {visibleParticipants.map(participant => (<Avatar
+                                className = { classes.participantAvatar }
+                                displayName = { participant.displayName }
+                                key = { participant.id }
+                                participantId = { participant.id }
+                                size = { 36 } />))}
+                            {hiddenParticipantCount > 0 && <span className = { classes.participantOverflow }>
+                                +{hiddenParticipantCount}
+                            </span>}
+                        </div>
+                        <div className = { classes.participantCount }>
+                            {t('prejoin.peopleAlreadyHere', { count: roomParticipants.length })}
+                        </div>
+                        <div className = { classes.participantNames }>{namedParticipants.join(', ')}</div>
+                    </> : <div className = { classes.participantCount }>{t('prejoin.noOneElseHere')}</div>}
+                </section>}
 
                 <div className = { classes.dropdownContainer }>
                     <Popover
@@ -505,6 +649,8 @@ function mapStateToProps(state: IReduxState) {
     const { id: participantId } = getLocalParticipant(state) ?? {};
     const { joiningInProgress } = state['features/prejoin'];
     const { room } = state['features/base/conference'];
+    const { locationURL } = state['features/base/connection'];
+    const { jwt } = state['features/base/jwt'];
     const { unsafeRoomConsent } = state['features/base/premeeting'];
     const config = state['features/base/config'];
     const { showPrejoinWarning: showRecordingWarning } = config.recordings ?? {};
@@ -514,10 +660,13 @@ function mapStateToProps(state: IReduxState) {
         hasJoinByPhoneButton: isJoinByPhoneButtonVisible(state),
         isDisplayNameVisible: isPrejoinDisplayNameVisible(state),
         joiningInProgress,
+        jwt,
+        locationURL,
         name,
         participantId,
         prejoinConfig: state['features/base/config'].prejoinConfig,
         readOnlyName: isNameReadOnly(state),
+        roomName: room,
         showCameraPreview: !isVideoMutedByUser(state),
         showDialog: isJoinByPhoneDialogVisible(state),
         showErrorOnJoin,

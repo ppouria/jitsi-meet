@@ -2,7 +2,7 @@ import assert from 'assert';
 
 import { mintAsapToken } from './helpers/jwt.js';
 import { enableLobby } from './helpers/test_observer.js';
-import { joinWithFocus } from './helpers/xmpp_client.js';
+import { createXmppClient, joinWithFocus } from './helpers/xmpp_client.js';
 
 const CONFERENCE = 'conference.localhost';
 const BASE_URL = 'http://localhost:5280/room-info';
@@ -276,6 +276,35 @@ describe('mod_muc_password_check', () => {
 
             assert.strictEqual(status, 200);
             assert.strictEqual(body.conference, `${roomName}@${CONFERENCE}`);
+        });
+
+        it('returns the people currently inside the room', async () => {
+            const r = room();
+            const roomName = r.split('@')[0];
+
+            await focusJoin(r);
+            const participant = await createXmppClient();
+
+            clients.push(participant);
+            await participant.joinRoom(r, undefined, { displayName: 'Ada' });
+
+            const token = mintAsapToken({ room: roomName });
+            const { status, body } = await getRoomInfo(roomName, token);
+
+            assert.strictEqual(status, 200);
+            assert.deepStrictEqual(body.participants.map(({ displayName }) => displayName), [ 'Ada' ]);
+        });
+
+        it('does not expose people in another room', async () => {
+            const r = room();
+            const roomName = r.split('@')[0];
+
+            await focusJoin(r);
+
+            const token = mintAsapToken({ room: 'another-room' });
+            const { status } = await getRoomInfo(roomName, token);
+
+            assert.strictEqual(status, 403);
         });
 
     });

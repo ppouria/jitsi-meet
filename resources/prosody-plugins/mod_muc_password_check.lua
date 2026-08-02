@@ -3,10 +3,10 @@
 --
 -- Endpoints:
 --   GET  /room-info?room=<name>[&prefix=<subdomain>]
---     Returns a JSON object: { conference, passcodeProtected, lobbyEnabled }
+--     Returns a JSON object: { conference, passcodeProtected, lobbyEnabled, participants }
 --     where conference is the full room JID, passcodeProtected is true when the
---     room has a password set, and lobbyEnabled is true when a lobby room is
---     attached.
+--     room has a password set, lobbyEnabled is true when a lobby room is
+--     attached, and participants is included only for authenticated requests.
 --
 --   PUT  /room-info?room=<name>[&prefix=<subdomain>]
 --     Body: application/json  { passcode: "<value>" }
@@ -14,8 +14,8 @@
 --     matches the room password.
 --
 -- Authentication:
---   Both endpoints require a valid ASAP Bearer token (RS256) in the
---   Authorization header.  Token verification is controlled by the
+--   Both endpoints require a valid room-scoped Bearer token in the
+--   Authorization header. Token verification is controlled by the
 --   enable_password_token_verification option (default: true).
 --
 -- Error responses:
@@ -32,6 +32,7 @@
 -- Copyright (C) 2023-present 8x8, Inc.
 
 local inspect = require "inspect";
+local array = require "util.array";
 local formdecode = require "util.http".formdecode;
 local urlencode = require "util.http".urlencode;
 local jid = require "util.jid";
@@ -40,11 +41,25 @@ local util = module:require "util";
 local async_handler_wrapper = util.async_handler_wrapper;
 local starts_with = util.starts_with;
 local process_host_module = util.process_host_module;
-local token_util = module:require "token/util".new(module);
+local is_focus = util.is_focus;
 
 -- option to enable/disable room API token verifications
 local enableTokenVerification
 = module:get_option_boolean("enable_password_token_verification", true);
+local token_util;
+
+if enableTokenVerification then
+    if not module:get_option_string("app_id") then
+        module:log("info", "No token configuration found, disabling password check endpoint.");
+        return;
+    end
+
+    token_util = module:require "token/util".new(module);
+    if not token_util then
+        module:log("warn", "Invalid token configuration, disabling password check endpoint.");
+        return;
+    end
+end
 
 local muc_domain_base = module:get_option_string("muc_mapper_domain_base");
 if not muc_domain_base then
@@ -58,7 +73,7 @@ local json_content_type = "application/json";
 --- Verifies the token
 -- @param token the token we received
 -- @param room_address the full room address jid
--- @return true if values are ok or false otherwise
+-- @return the verified session if values are ok or false otherwise
 function verify_token(token, room_address)
     if not enableTokenVerification then
         return true;
@@ -81,7 +96,7 @@ function verify_token(token, room_address)
         return false;
     end
 
-    return true;
+    return session;
 end
 
 -- Validates the request by checking for required url param room and
@@ -116,7 +131,8 @@ local function validate_and_get_room(request)
         token = token:sub(8,#token)
     end
 
-    if not verify_token(token, room_address) then
+    local session = verify_token(token, room_address);
+    if not session then
         return 403, nil;
     end
 
@@ -125,9 +141,14 @@ local function validate_and_get_room(request)
     if not room then
         module:log("warn", "No room found for %s", room_address);
         return 404, nil;
-    else
-        return 200, room;
     end
+
+    if enableTokenVerification and not token_util:verify_room(session, room_address) then
+        module:log("warn", "Token is not allowed to inspect %s", room_address);
+        return 403, nil;
+    end
+
+    return 200, room;
 end
 
 function handle_validate_room_password (event)
@@ -188,6 +209,24 @@ function handle_get_room_password (event)
     room_details["conference"] = room.jid;
     room_details["passcodeProtected"] = room:get_password() ~= nil;
     room_details["lobbyEnabled"] = room._data ~= nil and room._data.lobbyroom ~= nil;
+    if enableTokenVerification then
+        room_details["participants"] = array();
+
+        for room_nick, occupant in room:each_occupant() do
+            if not is_focus(room_nick) then
+                local presence = occupant:get_presence();
+                room_details["participants"]:push({
+                    id = jid.resource(room_nick) or tostring(room_nick);
+                    displayName = presence and presence:get_child_text(
+                        "nick", "http://jabber.org/protocol/nick") or "";
+                });
+            end
+        end
+
+        table.sort(room_details["participants"], function(a, b)
+            return a.displayName < b.displayName;
+        end);
+    end
 
     local json_msg_str, error = json.encode(room_details);
     if not json_msg_str then

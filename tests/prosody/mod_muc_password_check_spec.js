@@ -278,6 +278,19 @@ describe('mod_muc_password_check', () => {
             assert.strictEqual(body.conference, `${roomName}@${CONFERENCE}`);
         });
 
+        it('returns an empty participants array when only focus is present', async () => {
+            const r = room();
+            const roomName = r.split('@')[0];
+
+            await focusJoin(r);
+
+            const token = mintAsapToken({ room: roomName });
+            const { status, body } = await getRoomInfo(roomName, token);
+
+            assert.strictEqual(status, 200);
+            assert.deepStrictEqual(body.participants, []);
+        });
+
         it('returns the people currently inside the room', async () => {
             const r = room();
             const roomName = r.split('@')[0];

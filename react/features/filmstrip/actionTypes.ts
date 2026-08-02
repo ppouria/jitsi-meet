@@ -90,6 +90,11 @@ export const SET_VERTICAL_VIEW_DIMENSIONS = 'SET_VERTICAL_VIEW_DIMENSIONS';
 export const SET_VOLUME = 'SET_VOLUME';
 
 /**
+ * The type of action which sets a personal audio mute for one participant.
+ */
+export const SET_PERSONAL_AUDIO_MUTE = 'SET_PERSONAL_AUDIO_MUTE';
+
+/**
  * The type of the action which sets the list of visible remote participants in the filmstrip by storing the start and
  * end index in the remote participants array.
  *

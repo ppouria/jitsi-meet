@@ -6,6 +6,8 @@ import { getParticipantDisplayName } from '../base/participants/functions';
 import MiddlewareRegistry from '../base/redux/MiddlewareRegistry';
 import { openAllowToggleCameraDialog, setCameraFacingMode } from '../base/tracks/actions.web';
 import { CAMERA_FACING_MODE_MESSAGE } from '../base/tracks/constants';
+import { setPersonalAudioMute } from '../filmstrip/actions.web';
+import { PERSONAL_AUDIO_MUTE_MESSAGE } from '../filmstrip/personalAudioMute';
 
 import './middleware.any';
 
@@ -19,6 +21,9 @@ MiddlewareRegistry.register(store => next => action => {
                 /* onAllow */ () => APP.store.dispatch(setCameraFacingMode(data.facingMode)),
                 /* initiatorId */ participant.getId()
             ));
+        }
+        if (data?.name === PERSONAL_AUDIO_MUTE_MESSAGE && typeof data.muted === 'boolean') {
+            store.dispatch(setPersonalAudioMute(participant.getId(), 'byParticipant', data.muted));
         }
         break;
     }

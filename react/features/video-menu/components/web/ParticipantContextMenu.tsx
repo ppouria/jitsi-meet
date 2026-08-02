@@ -9,17 +9,19 @@ import { MEDIA_TYPE as AVM_MEDIA_TYPE } from '../../../av-moderation/constants';
 import { isSupported as isAvModerationSupported, isForceMuted } from '../../../av-moderation/functions';
 import Avatar from '../../../base/avatar/components/Avatar';
 import { isIosMobileBrowser, isMobileBrowser } from '../../../base/environment/utils';
+import { IconMic, IconMicSlash, IconVolumeOff, IconVolumeUp } from '../../../base/icons/svg';
 import { MEDIA_TYPE } from '../../../base/media/constants';
 import { PARTICIPANT_ROLE } from '../../../base/participants/constants';
 import { getLocalParticipant, hasRaisedHand, isPrivateChatEnabled } from '../../../base/participants/functions';
 import { IParticipant } from '../../../base/participants/types';
 import { isParticipantAudioMuted } from '../../../base/tracks/functions.any';
 import ContextMenu from '../../../base/ui/components/web/ContextMenu';
+import ContextMenuItem from '../../../base/ui/components/web/ContextMenuItem';
 import ContextMenuItemGroup from '../../../base/ui/components/web/ContextMenuItemGroup';
 import { getBreakoutRooms, getCurrentRoomId, isInBreakoutRoom } from '../../../breakout-rooms/functions';
 import { IRoom } from '../../../breakout-rooms/types';
 import { displayVerification } from '../../../e2ee/functions';
-import { setVolume } from '../../../filmstrip/actions.web';
+import { setPersonalAudioMute, setPersonalAudioMuteForParticipant, setVolume } from '../../../filmstrip/actions.web';
 import { isStageFilmstripAvailable } from '../../../filmstrip/functions.web';
 import { QUICK_ACTION_BUTTON } from '../../../participants-pane/constants';
 import { getQuickActionButtonType } from '../../../participants-pane/functions';
@@ -149,9 +151,13 @@ const ParticipantContextMenu = ({
     const _audioTranslationAvailable = useSelector(isAudioTranslationAvailable);
     const visitorsSupported = useSelector((state: IReduxState) => state['features/visitors'].supported);
     const { disableDemote, disableKick, disableGrantModerator } = remoteVideoMenu;
-    const { participantsVolume } = useSelector((state: IReduxState) => state['features/filmstrip']);
+    const { participantsVolume, personalAudioMutes } = useSelector(
+        (state: IReduxState) => state['features/filmstrip']);
     const _volume = (participant?.local ?? true ? undefined
         : participant?.id ? participantsVolume[participant?.id] : undefined) ?? 1;
+    const _personalAudioMute = personalAudioMutes[participant.id];
+    const _mutedForMe = Boolean(_personalAudioMute?.forMe);
+    const _mutedMeForParticipant = Boolean(_personalAudioMute?.forParticipant);
     const isBreakoutRoom = useSelector(isInBreakoutRoom);
     const isModerationSupported = useSelector((state: IReduxState) => isAvModerationSupported()(state));
     const raisedHands = hasRaisedHand(participant);
@@ -166,6 +172,12 @@ const ParticipantContextMenu = ({
     const _onVolumeChange = useCallback(value => {
         dispatch(setVolume(participant.id, value));
     }, [ setVolume, dispatch ]);
+    const _onMuteForMe = useCallback(() => {
+        dispatch(setPersonalAudioMute(participant.id, 'forMe', !_mutedForMe));
+    }, [ dispatch, participant.id, _mutedForMe ]);
+    const _onMuteMeForParticipant = useCallback(() => {
+        dispatch(setPersonalAudioMuteForParticipant(participant.id, !_mutedMeForParticipant));
+    }, [ dispatch, participant.id, _mutedMeForParticipant ]);
 
     const _getCurrentParticipantId = useCallback(() => {
         const drawer = _overflowDrawer && !thumbnailMenu;
@@ -205,6 +217,27 @@ const ParticipantContextMenu = ({
 
     const buttons: JSX.Element[] = [];
     const buttons2: JSX.Element[] = [];
+
+    if (!participant.local) {
+        const muteForMeText = t(`participantsPane.actions.${_mutedForMe ? 'unmuteForMe' : 'muteForMe'}`);
+        const muteMeForParticipantText = t(
+            `participantsPane.actions.${_mutedMeForParticipant ? 'unmuteMeForParticipant' : 'muteMeForParticipant'}`);
+
+        buttons.push(
+            <ContextMenuItem
+                accessibilityLabel = { muteForMeText }
+                icon = { _mutedForMe ? IconVolumeUp : IconVolumeOff }
+                key = 'mute-for-me'
+                onClick = { _onMuteForMe }
+                text = { muteForMeText } />,
+            <ContextMenuItem
+                accessibilityLabel = { muteMeForParticipantText }
+                icon = { _mutedMeForParticipant ? IconMic : IconMicSlash }
+                key = 'mute-me-for-participant'
+                onClick = { _onMuteMeForParticipant }
+                text = { muteMeForParticipantText } />
+        );
+    }
 
     const showVolumeSlider = !startSilent
         && !isIosMobileBrowser()

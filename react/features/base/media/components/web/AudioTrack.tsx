@@ -7,6 +7,7 @@ import { IReduxState } from '../../../../app/types';
 import { DEFAULT_ORIGINAL_VOLUME } from '../../../../audio-translation/constants';
 import { getDuckedVolumeForParticipant, shouldDuckOriginalAudio }
     from '../../../../audio-translation/functions';
+import { isIncomingPersonalAudioMuted } from '../../../../filmstrip/personalAudioMute';
 import { browser } from '../../../lib-jitsi-meet';
 import { ITrack } from '../../../tracks/types';
 import logger from '../../logger';
@@ -358,7 +359,7 @@ class AudioTrack extends Component<IProps> {
  * @returns {IProps}
  */
 function _mapStateToProps(state: IReduxState, ownProps: any) {
-    const { participantsVolume } = state['features/filmstrip'];
+    const { participantsVolume, personalAudioMutes } = state['features/filmstrip'];
     const audioTranslationConfigured = Boolean(state['features/base/config'].audioTranslation);
 
     let _volume: number | boolean | undefined = participantsVolume[ownProps.participantId];
@@ -377,7 +378,8 @@ function _mapStateToProps(state: IReduxState, ownProps: any) {
 
     return {
         _ducked: ducked,
-        _muted: state['features/base/config'].startSilent,
+        _muted: state['features/base/config'].startSilent
+            || isIncomingPersonalAudioMuted(personalAudioMutes[ownProps.participantId]),
         _volume
     };
 }

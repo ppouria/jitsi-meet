@@ -9,6 +9,7 @@ import {
     SET_FILMSTRIP_VISIBLE,
     SET_FILMSTRIP_WIDTH,
     SET_HORIZONTAL_VIEW_DIMENSIONS,
+    SET_PERSONAL_AUDIO_MUTE,
     SET_REMOTE_PARTICIPANTS,
     SET_SCREENSHARE_FILMSTRIP_PARTICIPANT,
     SET_SCREENSHARING_TILE_DIMENSIONS,
@@ -23,6 +24,7 @@ import {
     SET_VISIBLE_REMOTE_PARTICIPANTS,
     SET_VOLUME
 } from './actionTypes';
+import { PersonalAudioMuteState } from './personalAudioMute';
 
 const DEFAULT_STATE = {
 
@@ -61,6 +63,13 @@ const DEFAULT_STATE = {
      * @type {Object}
      */
     participantsVolume: {},
+
+    /**
+     * Personal audio mute state per participant.
+     *
+     * @type {Object}
+     */
+    personalAudioMutes: {},
 
     /**
      * The ordered IDs of the remote participants displayed in the filmstrip.
@@ -221,6 +230,9 @@ export interface IFilmstripState {
     participantsVolume: {
         [participantId: string]: number;
     };
+    personalAudioMutes: {
+        [participantId: string]: PersonalAudioMuteState;
+    };
     remoteParticipants: string[];
     screenshareFilmstripDimensions: {
         filmstripHeight?: number;
@@ -310,6 +322,17 @@ ReducerRegistry.register<IFilmstripState>(
                     [action.participantId]: action.volume
                 }
             };
+        case SET_PERSONAL_AUDIO_MUTE:
+            return {
+                ...state,
+                personalAudioMutes: {
+                    ...state.personalAudioMutes,
+                    [action.participantId]: {
+                        ...state.personalAudioMutes[action.participantId],
+                        [action.direction]: action.muted
+                    }
+                }
+            };
         case SET_VISIBLE_REMOTE_PARTICIPANTS: {
             const { endIndex, startIndex, fullyVisibleCount } = action;
             const { remoteParticipants } = state;
@@ -330,6 +353,7 @@ ReducerRegistry.register<IFilmstripState>(
                 return state;
             }
             delete state.participantsVolume[id];
+            delete state.personalAudioMutes[id];
 
             return {
                 ...state

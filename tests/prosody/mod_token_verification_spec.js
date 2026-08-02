@@ -170,6 +170,43 @@ describe('mod_token_verification', () => {
             assert.ok(isAvailablePresence(presence),
                 'wildcard room claim must be allowed in any room');
         });
+
+        it('blocks the same account from joining one room twice', async () => {
+            const room = await setupRoom();
+            const roomName = room.split('@')[0];
+            const context = { user: { id: 'single-room-user' } };
+            const first = await createXmppClient({ params: { token: mintAsapToken({ room: roomName,
+                context }) } });
+            const second = await createXmppClient({ params: { token: mintAsapToken({ room: roomName,
+                context }) } });
+
+            clients.push(first, second);
+            assert.ok(isAvailablePresence(await first.joinRoom(room)));
+
+            const presence = await second.joinRoom(room);
+
+            assert.strictEqual(presence.attrs.type, 'error');
+            assert.ok(presence.getChild('error')?.getChild('not-allowed'));
+        });
+
+        it('allows the same account to join different rooms', async () => {
+            const firstRoom = await setupRoom();
+            const secondRoom = await setupRoom();
+            const context = { user: { id: 'multi-room-user' } };
+            const first = await createXmppClient({ params: {
+                token: mintAsapToken({ room: firstRoom.split('@')[0],
+                    context })
+            } });
+            const second = await createXmppClient({ params: {
+                token: mintAsapToken({ room: secondRoom.split('@')[0],
+                    context })
+            } });
+
+            clients.push(first, second);
+
+            assert.ok(isAvailablePresence(await first.joinRoom(firstRoom)));
+            assert.ok(isAvailablePresence(await second.joinRoom(secondRoom)));
+        });
     });
 
     // ── token_verification_require_token_for_moderation ──────────────────────

@@ -21,6 +21,7 @@
         "recentRoomTime": "زمان حضور اخیر در اتاق‌ها",
         "removeAvatar": "حذف تصویر",
         "requestFailed": "درخواست حساب با خطا مواجه شد.",
+        "roomAlreadyOpen": "این مرورگر از قبل به این اتاق متصل است.",
         "roomOwner": "کنترل‌های مالک اتاق",
         "saveProfile": "ذخیره پروفایل",
         "signup": "ثبت‌نام",

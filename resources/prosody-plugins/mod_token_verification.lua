@@ -108,6 +108,26 @@ local function verify_user(session, stanza)
     return true;
 end
 
+local function has_duplicate_account(room, session)
+    local context_user = session.jitsi_meet_context_user;
+    local user_id = context_user and context_user.id;
+    if not user_id then
+        return false;
+    end
+
+    for _, occupant in room:each_occupant() do
+        for full_jid in pairs(occupant.sessions) do
+            local occupant_session = prosody.full_sessions[full_jid];
+            local occupant_user = occupant_session and occupant_session.jitsi_meet_context_user;
+            if occupant_session ~= session and occupant_user and occupant_user.id == user_id then
+                return true;
+            end
+        end
+    end
+
+    return false;
+end
+
 module:hook("muc-room-pre-create", function(event)
     local origin, stanza = event.origin, event.stanza;
     if DEBUG then module:log("debug", "pre create: %s %s", tostring(origin), tostring(stanza)); end
@@ -124,6 +144,13 @@ module:hook("muc-occupant-pre-join", function(event)
     if not verify_user(origin, stanza) then
         measure_fail(1);
         return true; -- Returning any value other than nil will halt processing of the event
+    end
+    if has_duplicate_account(room, origin) then
+        module:log('info', 'Blocked duplicate account from joining room: %s', room.jid);
+        origin.send(st.error_reply(stanza, 'cancel', 'not-allowed', 'This account is already in the room.')
+            :tag('duplicate-account', { xmlns = 'http://jitsi.org/jitmeet' }));
+        measure_fail(1);
+        return true;
     end
     measure_success(1);
 end, 99);

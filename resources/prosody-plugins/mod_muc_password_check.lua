@@ -41,7 +41,9 @@ local util = module:require "util";
 local async_handler_wrapper = util.async_handler_wrapper;
 local starts_with = util.starts_with;
 local process_host_module = util.process_host_module;
-local is_focus = util.is_focus;
+local is_focus = util.is_focus or function(nick)
+    return nick ~= nil and string.sub(nick, -string.len("/focus")) == "/focus";
+end;
 
 -- option to enable/disable room API token verifications
 local enableTokenVerification

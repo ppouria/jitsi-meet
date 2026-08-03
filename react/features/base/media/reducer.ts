@@ -10,6 +10,7 @@ import {
     SET_AUDIO_MUTED,
     SET_AUDIO_UNMUTE_PERMISSIONS,
     SET_CAMERA_FACING_MODE,
+    SET_DEAFENED,
     SET_INITIAL_GUM_PROMISE,
     SET_SCREENSHARE_MUTED,
     SET_VIDEO_AVAILABLE,
@@ -39,6 +40,7 @@ import { IGUMPendingState } from './types';
  */
 export const _AUDIO_INITIAL_MEDIA_STATE = {
     available: true,
+    deafened: false,
     gumPending: IGUMPendingState.NONE,
     unmuteBlocked: false,
     muted: false
@@ -55,6 +57,13 @@ export const _AUDIO_INITIAL_MEDIA_STATE = {
  */
 function _audio(state: IAudioState = _AUDIO_INITIAL_MEDIA_STATE, action: AnyAction) {
     switch (action.type) {
+    case CONFERENCE_FAILED:
+    case CONFERENCE_LEFT:
+        return state.deafened ? {
+            ...state,
+            deafened: false
+        } : state;
+
     case SET_AUDIO_AVAILABLE:
         return {
             ...state,
@@ -75,6 +84,12 @@ function _audio(state: IAudioState = _AUDIO_INITIAL_MEDIA_STATE, action: AnyActi
         return {
             ...state,
             muted: action.muted
+        };
+
+    case SET_DEAFENED:
+        return {
+            ...state,
+            deafened: action.deafened
         };
 
     case SET_AUDIO_UNMUTE_PERMISSIONS:
@@ -267,6 +282,7 @@ function _video(state: IVideoState = _VIDEO_INITIAL_MEDIA_STATE, action: any) {
 
 interface IAudioState {
     available: boolean;
+    deafened: boolean;
     gumPending: IGUMPendingState;
     muted: boolean;
     unmuteBlocked: boolean;

@@ -51,6 +51,7 @@ import {
     VIDEO_MUTISM_AUTHORITY,
     VIDEO_TYPE
 } from './constants';
+import { shouldBlockAudioUnmute } from './deafen';
 import { getStartWithAudioMuted, getStartWithVideoMuted } from './functions';
 import logger from './logger';
 import {
@@ -109,7 +110,8 @@ MiddlewareRegistry.register(store => next => action => {
         const state = store.getState();
         const participant = getLocalParticipant(state);
 
-        if (!action.muted && isForceMuted(participant, AVM_MEDIA_TYPE.AUDIO, state)) {
+        if (shouldBlockAudioUnmute(state['features/base/media'].audio.deafened, action.muted)
+                || (!action.muted && isForceMuted(participant, AVM_MEDIA_TYPE.AUDIO, state))) {
             return;
         }
         break;

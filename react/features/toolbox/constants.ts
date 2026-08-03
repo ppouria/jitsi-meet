@@ -92,6 +92,7 @@ export const NATIVE_THRESHOLDS = [
  */
 export const MAIN_TOOLBAR_BUTTONS_PRIORITY = [
     'microphone',
+    'deafen',
     'camera',
     'desktop',
     'chat',
@@ -151,6 +152,7 @@ export const TOOLBAR_BUTTONS: ToolbarButton[] = [
     'chat',
     'closedcaptions',
     'custom-panel',
+    'deafen',
     'desktop',
     'download',
     'embedmeeting',

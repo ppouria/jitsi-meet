@@ -21,6 +21,7 @@ export type ToolbarButton = 'audiotranslation' |
     'chat' |
     'closedcaptions' |
     'custom-panel' |
+    'deafen' |
     'desktop' |
     'download' |
     'embedmeeting' |

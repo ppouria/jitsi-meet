@@ -379,6 +379,7 @@ function _mapStateToProps(state: IReduxState, ownProps: any) {
     return {
         _ducked: ducked,
         _muted: state['features/base/config'].startSilent
+            || state['features/base/media'].audio.deafened
             || isIncomingPersonalAudioMuted(personalAudioMutes[ownProps.participantId]),
         _volume
     };

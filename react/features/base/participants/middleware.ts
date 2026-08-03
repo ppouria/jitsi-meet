@@ -40,6 +40,7 @@ import { SET_CONFIG } from '../config/actionTypes';
 import { getDisableRemoveRaisedHandOnFocus } from '../config/functions.any';
 import { JitsiConferenceEvents } from '../lib-jitsi-meet';
 import { VIDEO_TYPE } from '../media/constants';
+import { parseDeafenedProperty } from '../media/deafen';
 import MiddlewareRegistry from '../redux/MiddlewareRegistry';
 import StateListenerRegistry from '../redux/StateListenerRegistry';
 import { playSound, registerSound, unregisterSound } from '../sounds/actions';
@@ -486,6 +487,12 @@ StateListenerRegistry.register(
             const propertyHandlers: {
                 [key: string]: Function;
             } = {
+                'deafened': (participant: IJitsiParticipant, value: boolean | string) =>
+                    store.dispatch(participantUpdated({
+                        conference,
+                        deafened: parseDeafenedProperty(value),
+                        id: participant.getId()
+                    })),
                 'e2ee.enabled': (participant: IJitsiParticipant, value: string) =>
                     _e2eeUpdated(store, conference, participant.getId(), value),
                 'features_e2ee': (participant: IJitsiParticipant, value: boolean) =>

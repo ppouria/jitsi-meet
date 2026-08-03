@@ -85,7 +85,7 @@ export function setAudioMuted(muted: boolean, ensureTrack = false) {
  * @returns {Function}
  */
 export function setDeafened(deafened: boolean) {
-    return (dispatch: IStore['dispatch']) => {
+    return (dispatch: IStore['dispatch'], getState: IStore['getState']) => {
         dispatch({
             type: SET_DEAFENED,
             deafened
@@ -94,6 +94,9 @@ export function setDeafened(deafened: boolean) {
         if (deafened) {
             dispatch(setAudioMuted(true));
         }
+
+        getState()['features/base/conference'].conference
+            ?.setLocalParticipantProperty('deafened', deafened);
     };
 }
 

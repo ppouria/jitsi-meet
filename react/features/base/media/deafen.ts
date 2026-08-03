@@ -8,3 +8,13 @@
 export function shouldBlockAudioUnmute(deafened: boolean, muted: boolean) {
     return deafened && !muted;
 }
+
+/**
+ * Parses the participant property used to signal deafen state.
+ *
+ * @param {unknown} value - The signalled property value.
+ * @returns {boolean}
+ */
+export function parseDeafenedProperty(value: unknown) {
+    return value === true || value === 'true';
+}

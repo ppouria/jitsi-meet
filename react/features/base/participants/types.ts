@@ -11,6 +11,7 @@ export interface IParticipant {
     avatarURL?: string;
     botType?: string;
     conference?: IJitsiConference;
+    deafened?: boolean;
     displayName?: string;
     dominantSpeaker?: boolean;
     e2eeEnabled?: boolean;

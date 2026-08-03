@@ -727,6 +727,7 @@
     },
     "jitsiHome": "{{logo}} Logo, links to  Homepage",
     "keyboardShortcuts": {
+        "deafen": "Deafen or undeafen",
         "focusLocal": "Focus on your video",
         "focusRemote": "Focus on another person's video",
         "fullScreen": "View or exit full screen",
@@ -1679,6 +1680,7 @@
     },
     "videothumbnail": {
         "connectionInfo": "Connection Info",
+        "deafened": "Participant is deafened",
         "demote": "Move to viewer",
         "domute": "Mute",
         "domuteDesktop": "Stop screen-sharing",

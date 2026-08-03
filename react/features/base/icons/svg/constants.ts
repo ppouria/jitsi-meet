@@ -46,6 +46,7 @@ import { default as IconFeedback } from './feedback.svg';
 import { default as IconGear } from './gear.svg';
 import { default as IconGoogle } from './google.svg';
 import { default as IconHangup } from './hangup.svg';
+import { default as IconDeviceHeadphoneSlash } from './headset-slash.svg';
 import { default as IconDeviceHeadphone } from './headset.svg';
 import { default as IconHelp } from './help.svg';
 import { default as IconHighlight } from './highlight.svg';
@@ -139,6 +140,7 @@ export const DEFAULT_ICON: Record<string, any> = {
     IconConnectionInactive,
     IconCopy,
     IconDeviceHeadphone,
+    IconDeviceHeadphoneSlash,
     IconDotsHorizontal,
     IconDownload,
     IconE2EE,

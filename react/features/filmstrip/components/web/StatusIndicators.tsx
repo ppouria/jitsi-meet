@@ -2,9 +2,11 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 
 import { IReduxState } from '../../../app/types';
+import { IconDeviceHeadphoneSlash } from '../../../base/icons/svg';
 import { MEDIA_TYPE } from '../../../base/media/constants';
 import { PARTICIPANT_ROLE } from '../../../base/participants/constants';
 import { getParticipantByIdOrUndefined, isScreenShareParticipantById } from '../../../base/participants/functions';
+import BaseIndicator from '../../../base/react/components/web/BaseIndicator';
 import {
     getVideoTrackByParticipant,
     isLocalTrackMuted,
@@ -26,6 +28,11 @@ interface IProps {
      * Indicates if the audio muted indicator should be visible or not.
      */
     _showAudioMutedIndicator: Boolean;
+
+    /**
+     * Indicates if the participant is deafened.
+     */
+    _showDeafenedIndicator: Boolean;
 
     /**
      * Indicates if the moderator indicator should be visible or not.
@@ -68,6 +75,7 @@ class StatusIndicators extends Component<IProps> {
     override render() {
         const {
             _showAudioMutedIndicator,
+            _showDeafenedIndicator,
             _showModeratorIndicator,
             _showScreenShareIndicator,
             _showTranslationIndicator,
@@ -78,7 +86,16 @@ class StatusIndicators extends Component<IProps> {
 
         return (
             <>
-                { _showAudioMutedIndicator && <AudioMutedIndicator tooltipPosition = { tooltipPosition } /> }
+                { _showDeafenedIndicator
+                    ? <BaseIndicator
+                        icon = { IconDeviceHeadphoneSlash }
+                        iconId = 'headset-disabled'
+                        iconSize = { 16 }
+                        id = 'deafened'
+                        tooltipKey = 'videothumbnail.deafened'
+                        tooltipPosition = { tooltipPosition } />
+                    : _showAudioMutedIndicator
+                        && <AudioMutedIndicator tooltipPosition = { tooltipPosition } /> }
                 { _showModeratorIndicator && <ModeratorIndicator tooltipPosition = { tooltipPosition } />}
                 { _showTranslationIndicator && <TranslationIndicator
                     participantId = { participantID }
@@ -123,9 +140,13 @@ function _mapStateToProps(state: IReduxState, ownProps: any) {
     }
 
     const { disableModeratorIndicator } = state['features/base/config'];
+    const isDeafened = participant?.local
+        ? state['features/base/media'].audio.deafened
+        : Boolean(participant?.deafened);
 
     return {
-        _showAudioMutedIndicator: isAudioMuted && audio,
+        _showAudioMutedIndicator: isAudioMuted && audio && !isDeafened,
+        _showDeafenedIndicator: isDeafened && audio,
         _showModeratorIndicator:
             !disableModeratorIndicator && participant && participant.role === PARTICIPANT_ROLE.MODERATOR && moderator,
         _showScreenShareIndicator: isScreenSharing && screenshare,

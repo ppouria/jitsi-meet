@@ -32,31 +32,31 @@ export const THRESHOLDS = [
     },
     {
         width: 565,
-        order: [ 'microphone', 'camera', 'desktop', 'chat', 'raisehand', 'reactions', 'participants-pane', 'tileview' ]
+        order: [ 'microphone', 'deafen', 'camera', 'desktop', 'chat', 'raisehand', 'reactions', 'participants-pane' ]
     },
     {
         width: 520,
-        order: [ 'microphone', 'camera', 'desktop', 'chat', 'raisehand', 'participants-pane', 'tileview' ]
+        order: [ 'microphone', 'deafen', 'camera', 'desktop', 'chat', 'raisehand', 'participants-pane' ]
     },
     {
         width: 470,
-        order: [ 'microphone', 'camera', 'desktop', 'chat', 'raisehand', 'participants-pane' ]
+        order: [ 'microphone', 'deafen', 'camera', 'desktop', 'chat', 'participants-pane' ]
     },
     {
         width: 420,
-        order: [ 'microphone', 'camera', 'desktop', 'chat', 'participants-pane' ]
+        order: [ 'microphone', 'deafen', 'camera', 'chat', 'participants-pane' ]
     },
     {
         width: 370,
-        order: [ 'microphone', 'camera', 'chat', 'participants-pane' ]
+        order: [ 'microphone', 'deafen', 'camera', 'chat' ]
     },
     {
         width: 225,
-        order: [ 'microphone', 'camera', 'chat' ]
+        order: [ 'microphone', 'deafen', 'camera' ]
     },
     {
         width: 200,
-        order: [ 'microphone', 'camera' ]
+        order: [ 'microphone', 'deafen' ]
     }
 ];
 

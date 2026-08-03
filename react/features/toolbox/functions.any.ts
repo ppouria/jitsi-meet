@@ -15,10 +15,11 @@ import { VISITORS_MODE_BUTTONS } from './constants';
  * @returns {boolean}
  */
 export function isAudioMuteButtonDisabled(state: IReduxState) {
-    const { available, muted, unmuteBlocked, gumPending } = state['features/base/media'].audio;
+    const { available, deafened, muted, unmuteBlocked, gumPending } = state['features/base/media'].audio;
     const { startSilent } = state['features/base/config'];
 
-    return Boolean(!available || startSilent || (muted && unmuteBlocked) || gumPending !== IGUMPendingState.NONE
+    return Boolean(!available || deafened || startSilent || (muted && unmuteBlocked)
+        || gumPending !== IGUMPendingState.NONE
         || iAmVisitor(state));
 }
 

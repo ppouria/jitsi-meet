@@ -71,6 +71,7 @@ import DownloadButton from './components/DownloadButton';
 import HelpButton from './components/HelpButton';
 import AudioSettingsButton from './components/web/AudioSettingsButton';
 import CustomOptionButton from './components/web/CustomOptionButton';
+import DeafenButton from './components/web/DeafenButton';
 import FullscreenButton from './components/web/FullscreenButton';
 import LinkToSalesforceButton from './components/web/LinkToSalesforceButton';
 import ProfileButton from './components/web/ProfileButton';
@@ -84,6 +85,12 @@ import { ICustomToolbarButton, IToolboxButton, ToolbarButton } from './types';
 const microphone = {
     key: 'microphone',
     Content: AudioSettingsButton,
+    group: 0
+};
+
+const deafen = {
+    key: 'deafen',
+    Content: DeafenButton,
     group: 0
 };
 
@@ -317,6 +324,7 @@ export function useToolboxButtons(
 
     const buttons: { [key in ToolbarButton]?: IToolboxButton; } = {
         microphone,
+        deafen,
         camera,
         profile,
         desktop: desktopSharing,

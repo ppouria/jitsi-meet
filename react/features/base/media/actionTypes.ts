@@ -31,6 +31,11 @@ export const SET_AUDIO_AVAILABLE = 'SET_AUDIO_AVAILABLE';
 export const SET_AUDIO_MUTED = 'SET_AUDIO_MUTED';
 
 /**
+ * The type of (redux) action to set whether local and incoming audio are deafened.
+ */
+export const SET_DEAFENED = 'SET_DEAFENED';
+
+/**
  * The type of (redux) action to enable/disable the audio mute icon.
  *
  * {

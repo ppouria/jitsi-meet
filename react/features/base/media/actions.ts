@@ -10,6 +10,7 @@ import {
     SET_AUDIO_MUTED,
     SET_AUDIO_UNMUTE_PERMISSIONS,
     SET_CAMERA_FACING_MODE,
+    SET_DEAFENED,
     SET_INITIAL_GUM_PROMISE,
     SET_SCREENSHARE_MUTED,
     SET_VIDEO_AVAILABLE,
@@ -73,6 +74,26 @@ export function setAudioMuted(muted: boolean, ensureTrack = false) {
             ensureTrack,
             muted
         });
+    };
+}
+
+/**
+ * Sets whether the local participant is deafened. Enabling it always mutes the
+ * microphone; disabling it intentionally leaves the microphone muted.
+ *
+ * @param {boolean} deafened - Whether deafen should be enabled.
+ * @returns {Function}
+ */
+export function setDeafened(deafened: boolean) {
+    return (dispatch: IStore['dispatch']) => {
+        dispatch({
+            type: SET_DEAFENED,
+            deafened
+        });
+
+        if (deafened) {
+            dispatch(setAudioMuted(true));
+        }
     };
 }
 

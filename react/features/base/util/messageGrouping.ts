@@ -8,6 +8,27 @@ export interface IGroupableMessage {
      * The ID of the participant who sent the message.
      */
     participantId: string;
+
+    /**
+     * The time at which the message was sent.
+     */
+    timestamp?: number;
+}
+
+/**
+ * Returns the local calendar day for a message timestamp.
+ *
+ * @param {number} timestamp - The message timestamp.
+ * @returns {string | undefined} A stable local-day key.
+ */
+export function getMessageDay(timestamp?: number): string | undefined {
+    if (typeof timestamp !== 'number') {
+        return undefined;
+    }
+
+    const date = new Date(timestamp);
+
+    return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 }
 
 /**
@@ -64,7 +85,11 @@ export function groupMessagesBySender<T extends IGroupableMessage>(
     let currentGroup: IMessageGroup<T> | null = null;
 
     for (const message of messages) {
-        if (!currentGroup || currentGroup.senderId !== message.participantId) {
+        const currentDay = getMessageDay(currentGroup?.messages[0].timestamp);
+        const messageDay = getMessageDay(message.timestamp);
+
+        if (!currentGroup || currentGroup.senderId !== message.participantId
+                || Boolean(currentDay && messageDay && currentDay !== messageDay)) {
             currentGroup = {
                 messages: [ message ],
                 senderId: message.participantId

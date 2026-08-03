@@ -54,6 +54,24 @@
     }
 }
 
+.chat-date-separator {
+    align-items: center;
+    color: #B8C7E0;
+    display: flex;
+    font-size: 0.75rem;
+    font-weight: 600;
+    gap: 8px;
+    margin: 16px 0 12px;
+
+    &::before,
+    &::after {
+        background: rgba(255, 255, 255, 0.16);
+        content: '';
+        flex: 1;
+        height: 1px;
+    }
+}
+
 .chat-input-container {
     padding: 0 16px 24px;
 }

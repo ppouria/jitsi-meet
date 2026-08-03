@@ -2,7 +2,8 @@ import { throttle } from 'lodash-es';
 import React, { Component, RefObject } from 'react';
 import { scrollIntoView } from 'seamless-scroll-polyfill';
 
-import { groupMessagesBySender } from '../../../base/util/messageGrouping';
+import { getLocalizedDateFormatter } from '../../../base/i18n/dateUtil';
+import { getMessageDay, groupMessagesBySender } from '../../../base/util/messageGrouping';
 import { MESSAGE_TYPE_LOCAL, MESSAGE_TYPE_REMOTE } from '../../constants';
 import { IMessage } from '../../types';
 
@@ -118,16 +119,27 @@ export default class MessageContainer extends Component<IProps, IState> {
         const groupedMessages = this._getMessagesGroupedBySender();
         const content = groupedMessages.map((group, index) => {
             const { messages } = group;
-            const messageType = messages[0]?.messageType;
+            const firstMessage = messages[0];
+            const previousMessage = groupedMessages[index - 1]?.messages[0];
+            const messageType = firstMessage.messageType;
+            const showDate = getMessageDay(firstMessage.timestamp) !== getMessageDay(previousMessage?.timestamp);
+            const messageDate = new Date(firstMessage.timestamp);
+            const dateFormat = messageDate.getFullYear() === new Date().getFullYear() ? 'D MMMM' : 'D MMMM YYYY';
 
             return (
-                <ChatMessageGroup
-                    className = { messageType || MESSAGE_TYPE_REMOTE }
-                    editingMessage = { this.props.editingMessage }
-                    key = { index }
-                    messages = { messages }
-                    onCancelEdit = { this.props.onCancelEdit }
-                    onEditMessage = { this.props.onEditMessage } />
+                <React.Fragment key = { index }>
+                    { showDate && <div
+                        className = 'chat-date-separator'
+                        role = 'separator'>
+                        <span>{ getLocalizedDateFormatter(messageDate).format(dateFormat) }</span>
+                    </div> }
+                    <ChatMessageGroup
+                        className = { messageType || MESSAGE_TYPE_REMOTE }
+                        editingMessage = { this.props.editingMessage }
+                        messages = { messages }
+                        onCancelEdit = { this.props.onCancelEdit }
+                        onEditMessage = { this.props.onEditMessage } />
+                </React.Fragment>
             );
         });
 

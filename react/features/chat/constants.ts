@@ -66,7 +66,7 @@ export enum ChatTabs {
 /**
  * Formatter string to display the message timestamp.
  */
-export const TIMESTAMP_FORMAT = 'H:mm';
+export const TIMESTAMP_FORMAT = 'HH:mm';
 
 /**
  * The namespace for system messages.

@@ -52,6 +52,7 @@ export type ToolbarButton = 'audiotranslation' |
     'shareaudio' |
     'sharedvideo' |
     'shortcuts' |
+    'soundpad' |
     'stats' |
     'tileview' |
     'toggle-camera' |

@@ -1379,6 +1379,25 @@
         "speakerTime": "Speaker Time",
         "surprised": "Surprised"
     },
+    "soundpad": {
+        "allowParticipant": "Allow soundpad from this participant",
+        "blockParticipant": "Mute soundpad from this participant",
+        "delete": "Delete {{name}}",
+        "deleteButton": "Delete",
+        "empty": "No sounds uploaded yet.",
+        "help": "Upload any number of audio clips up to 10 seconds and 2 MB. They stay in this browser for your account.",
+        "invalidFile": "Choose a playable audio file up to 2 MB.",
+        "open": "Open soundpad",
+        "play": "Play {{name}} for everyone",
+        "playButton": "Play",
+        "playing": "Playing {{name}} for everyone.",
+        "sendError": "The sound could not be sent.",
+        "storageError": "The soundpad could not access browser storage.",
+        "title": "Soundpad",
+        "tooLong": "The sound must be 10 seconds or shorter.",
+        "upload": "Upload sound",
+        "uploaded": "{{name}} was added."
+    },
     "startupoverlay": {
         "genericTitle": "The meeting needs to use your microphone and camera.",
         "policyText": " ",

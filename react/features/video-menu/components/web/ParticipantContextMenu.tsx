@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { makeStyles } from 'tss-react/mui';
@@ -28,6 +28,7 @@ import { ISecondScreenSource } from '../../../multi-screen/types';
 import { QUICK_ACTION_BUTTON } from '../../../participants-pane/constants';
 import { getQuickActionButtonType } from '../../../participants-pane/functions';
 import { requestRemoteControl, stopController } from '../../../remote-control/actions';
+import { isSoundpadBlocked, setSoundpadBlocked } from '../../../soundpad/functions.web';
 import { getParticipantMenuButtonsWithNotifyClick, showOverflowDrawer } from '../../../toolbox/functions.web';
 import { NOTIFY_CLICK_MODE } from '../../../toolbox/types';
 import { PARTICIPANT_MENU_BUTTONS as BUTTONS } from '../../constants';
@@ -160,6 +161,9 @@ const ParticipantContextMenu = ({
     const _personalAudioMute = personalAudioMutes[participant.id];
     const _mutedForMe = Boolean(_personalAudioMute?.forMe);
     const _mutedMeForParticipant = Boolean(_personalAudioMute?.forParticipant);
+    const [ _soundpadBlocked, setSoundpadBlockedState ] = useState(() => isSoundpadBlocked(participant.id));
+
+    useEffect(() => setSoundpadBlockedState(isSoundpadBlocked(participant.id)), [ participant.id ]);
     const isBreakoutRoom = useSelector(isInBreakoutRoom);
     const isModerationSupported = useSelector((state: IReduxState) => isAvModerationSupported()(state));
     const raisedHands = hasRaisedHand(participant);
@@ -180,6 +184,12 @@ const ParticipantContextMenu = ({
     const _onMuteMeForParticipant = useCallback(() => {
         dispatch(setPersonalAudioMuteForParticipant(participant.id, !_mutedMeForParticipant));
     }, [ dispatch, participant.id, _mutedMeForParticipant ]);
+    const _onToggleSoundpad = useCallback(() => {
+        const blocked = !_soundpadBlocked;
+
+        setSoundpadBlocked(participant.id, blocked);
+        setSoundpadBlockedState(blocked);
+    }, [ participant.id, _soundpadBlocked ]);
 
     const _getCurrentParticipantId = useCallback(() => {
         const drawer = _overflowDrawer && !thumbnailMenu;
@@ -224,6 +234,7 @@ const ParticipantContextMenu = ({
         const muteForMeText = t(`participantsPane.actions.${_mutedForMe ? 'unmuteForMe' : 'muteForMe'}`);
         const muteMeForParticipantText = t(
             `participantsPane.actions.${_mutedMeForParticipant ? 'unmuteMeForParticipant' : 'muteMeForParticipant'}`);
+        const soundpadText = t(`soundpad.${_soundpadBlocked ? 'allowParticipant' : 'blockParticipant'}`);
 
         buttons.push(
             <ContextMenuItem
@@ -237,7 +248,13 @@ const ParticipantContextMenu = ({
                 icon = { _mutedMeForParticipant ? IconMic : IconMicSlash }
                 key = 'mute-me-for-participant'
                 onClick = { _onMuteMeForParticipant }
-                text = { muteMeForParticipantText } />
+                text = { muteMeForParticipantText } />,
+            <ContextMenuItem
+                accessibilityLabel = { soundpadText }
+                icon = { _soundpadBlocked ? IconVolumeUp : IconVolumeOff }
+                key = 'toggle-soundpad'
+                onClick = { _onToggleSoundpad }
+                text = { soundpadText } />
         );
     }
 

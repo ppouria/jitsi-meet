@@ -54,6 +54,7 @@ import { isScreenAudioSupported, isScreenVideoShared } from '../screen-share/fun
 import { useSecurityDialogButton } from '../security/hooks.web';
 import SettingsButton from '../settings/components/web/SettingsButton';
 import { useSharedVideoButton } from '../shared-video/hooks';
+import SoundpadButton from '../soundpad/components/web/SoundpadButton';
 import SpeakerStats from '../speaker-stats/components/web/SpeakerStats';
 import { isSpeakerStatsDisabled } from '../speaker-stats/functions';
 import { useSpeakerStatsButton } from '../speaker-stats/hooks.web';
@@ -92,6 +93,12 @@ const deafen = {
     key: 'deafen',
     Content: DeafenButton,
     group: 0
+};
+
+const soundpad = {
+    key: 'soundpad',
+    Content: SoundpadButton,
+    group: 3
 };
 
 const camera = {
@@ -325,6 +332,7 @@ export function useToolboxButtons(
     const buttons: { [key in ToolbarButton]?: IToolboxButton; } = {
         microphone,
         deafen,
+        soundpad,
         camera,
         profile,
         desktop: desktopSharing,

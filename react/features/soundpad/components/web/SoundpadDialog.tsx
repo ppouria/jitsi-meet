@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux';
 import { makeStyles } from 'tss-react/mui';
 
 import { IReduxState } from '../../../app/types';
+import { getLocalJitsiAudioTrack } from '../../../base/tracks/functions';
 import Button from '../../../base/ui/components/web/Button';
 import Dialog from '../../../base/ui/components/web/Dialog';
 import {
@@ -14,6 +15,7 @@ import {
     broadcastSoundpadSound,
     deleteSoundpadSound,
     getAudioDuration,
+    getSoundpadCooldownSeconds,
     getSoundpadSounds,
     saveSoundpadSound
 } from '../../functions.web';
@@ -62,18 +64,26 @@ export default function SoundpadDialog() {
     const { t } = useTranslation();
     const user = useSelector((state: IReduxState) => state['features/account'].user);
     const conference = useSelector((state: IReduxState) => state['features/base/conference'].conference);
+    const localAudio = useSelector(getLocalJitsiAudioTrack);
     const deafened = useSelector((state: IReduxState) => state['features/base/media'].audio.deafened);
     const sinkId = useSelector((state: IReduxState) => state['features/base/settings'].audioOutputDeviceId);
     const [ sounds, setSounds ] = useState<ISoundpadSound[]>([]);
     const [ busy, setBusy ] = useState(false);
     const [ error, setError ] = useState('');
     const [ status, setStatus ] = useState('');
+    const [ cooldown, setCooldown ] = useState(getSoundpadCooldownSeconds);
 
     useEffect(() => {
         if (user) {
             getSoundpadSounds(user.id).then(setSounds).catch(() => setError(t('soundpad.storageError')));
         }
     }, [ user?.id ]);
+
+    useEffect(() => {
+        const timer = window.setInterval(() => setCooldown(getSoundpadCooldownSeconds()), 250);
+
+        return () => clearInterval(timer);
+    }, []);
 
     const onUpload = async (event: ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -120,7 +130,7 @@ export default function SoundpadDialog() {
         }
     };
     const play = async (sound: ISoundpadSound) => {
-        if (!conference) {
+        if (!conference || !localAudio) {
             return;
         }
 
@@ -128,7 +138,7 @@ export default function SoundpadDialog() {
         setStatus('');
         setBusy(true);
         try {
-            await broadcastSoundpadSound(conference, sound, !deafened, sinkId);
+            await broadcastSoundpadSound(conference, localAudio, sound, !deafened, sinkId);
             setStatus(t('soundpad.playing', { name: sound.name }));
         } catch {
             setError(t('soundpad.sendError'));
@@ -171,6 +181,12 @@ export default function SoundpadDialog() {
                 aria-live = 'polite'
                 className = { classes.status }
                 role = 'status'>{status}</div>}
+            {cooldown > 0 && <div className = { classes.status }>
+                {t('soundpad.cooldown', { seconds: cooldown })}
+            </div>}
+            {!localAudio && <div
+                className = { classes.status }
+                role = 'status'>{t('soundpad.microphoneRequired')}</div>}
             {sounds.length ? <ul className = { classes.list }>
                 {sounds.map(sound => (<li
                     className = { classes.row }
@@ -179,7 +195,7 @@ export default function SoundpadDialog() {
                     <div className = { classes.actions }>
                         <Button
                             accessibilityLabel = { t('soundpad.play', { name: sound.name }) }
-                            disabled = { busy || !conference }
+                            disabled = { busy || cooldown > 0 || !conference || !localAudio }
                             label = { t('soundpad.playButton') }
                             onClick = { () => play(sound) }
                             size = 'small' />

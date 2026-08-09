@@ -3,30 +3,23 @@ import test from 'node:test';
 
 import {
     SOUNDPAD_MESSAGE,
-    isSoundpadMessage,
-    splitSoundpadPayload
-} from '../react/features/soundpad/functions.web.ts';
+    getSoundpadNextPlaybackAt,
+    isSoundpadMessage
+} from '../react/features/soundpad/protocol.ts';
 
-test('soundpad payloads are chunked and untrusted messages are rejected', () => {
-    const chunks = splitSoundpadPayload('a'.repeat(12_001));
-
-    assert.deepEqual(chunks.map(chunk => chunk.length), [ 12_000, 1 ]);
+test('soundpad waits for the sound plus ten seconds and validates control messages', () => {
+    assert.equal(getSoundpadNextPlaybackAt(1_000, 10), 21_000);
+    assert.equal(getSoundpadNextPlaybackAt(1_000, 0.5), 11_500);
     assert.equal(isSoundpadMessage({
-        label: 'Bell',
-        mimeType: 'audio/mpeg',
+        duration: 10,
         name: SOUNDPAD_MESSAGE,
-        part: 0,
-        parts: 1,
-        payload: 'YQ==',
-        soundId: 'sound-1'
+        soundId: 'sound-1',
+        state: 'start'
     }), true);
     assert.equal(isSoundpadMessage({
-        label: 'Not audio',
-        mimeType: 'text/html',
+        duration: 11,
         name: SOUNDPAD_MESSAGE,
-        part: 0,
-        parts: 1,
-        payload: 'YQ==',
-        soundId: 'sound-1'
+        soundId: 'sound-1',
+        state: 'start'
     }), false);
 });

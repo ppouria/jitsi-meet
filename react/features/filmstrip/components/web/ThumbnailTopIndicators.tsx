@@ -119,8 +119,17 @@ const ThumbnailTopIndicators = ({
                         participantId = { participantId }
                         statsPopoverPosition = { STATS_POPOVER_POSITION[thumbnailType] } />
                 }
+                {!local && <VideoMenuTriggerButton
+                    hidePopover = { hidePopover }
+                    participantId = { participantId }
+                    popoverVisible = { popoverVisible }
+                    showPopover = { showPopover }
+                    statsPopoverPosition = { STATS_POPOVER_POSITION[thumbnailType] }
+                    thumbnailType = { thumbnailType }
+                    visible = { isHovered || Boolean(popoverVisible) } />
+                }
 
-                {/* This thumbnail has no menu to add an entry to, so the second
+                {/* This thumbnail has no menu of its own, so the second
                     screen gets its own button, where the menu trigger would be. */}
                 <SendToSecondScreenIcon
                     source = { screenshareSource }

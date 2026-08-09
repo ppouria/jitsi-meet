@@ -18,6 +18,7 @@ import {
     SET_FILMSTRIP_WIDTH,
     SET_HORIZONTAL_VIEW_DIMENSIONS,
     SET_PERSONAL_AUDIO_MUTE,
+    SET_PERSONAL_VIDEO_MUTE,
     SET_SCREENSHARE_FILMSTRIP_PARTICIPANT,
     SET_SCREENSHARING_TILE_DIMENSIONS,
     SET_STAGE_FILMSTRIP_DIMENSIONS,
@@ -411,6 +412,21 @@ export function setPersonalAudioMute(
     return {
         type: SET_PERSONAL_AUDIO_MUTE,
         direction,
+        muted,
+        participantId
+    };
+}
+
+/**
+ * Stops or resumes receiving a remote participant's video for the local user.
+ *
+ * @param {string} participantId - The participant or screen-share source ID.
+ * @param {boolean} muted - Whether the video should stop being received.
+ * @returns {Object}
+ */
+export function setPersonalVideoMute(participantId: string, muted: boolean) {
+    return {
+        type: SET_PERSONAL_VIDEO_MUTE,
         muted,
         participantId
     };

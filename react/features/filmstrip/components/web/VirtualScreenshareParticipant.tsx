@@ -1,4 +1,4 @@
-import React, { TouchEventHandler } from 'react';
+import React, { TouchEventHandler, useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useStyles } from 'tss-react/mui';
 
@@ -126,6 +126,9 @@ const VirtualScreenshareParticipant = ({
     thumbnailType
 }: IProps) => {
     const currentLayout = useSelector(getCurrentLayout);
+    const [ popoverVisible, setPopoverVisible ] = useState(false);
+    const hidePopover = useCallback(() => setPopoverVisible(false), []);
+    const showPopover = useCallback(() => setPopoverVisible(true), []);
     const videoTrackId = videoTrack?.jitsiTrack?.getId();
     const video = videoTrack && <VideoTrack
         id = { isLocal ? 'localScreenshare_container' : `remoteVideo_${videoTrackId || ''}` }
@@ -161,8 +164,12 @@ const VirtualScreenshareParticipant = ({
                         currentLayout === LAYOUTS.TILE_VIEW && 'tile-view-mode'
                 ) }>
                 <ThumbnailTopIndicators
+                    hidePopover = { hidePopover }
                     isHovered = { isHovered }
+                    local = { isLocal }
                     participantId = { participantId }
+                    popoverVisible = { popoverVisible }
+                    showPopover = { showPopover }
                     thumbnailType = { thumbnailType } />
             </div>
             {shouldDisplayTintBackground && <div className = { classes?.tintBackground } />}

@@ -1780,6 +1780,7 @@
     },
     "videothumbnail": {
         "connectionInfo": "Connection Info",
+        "continueWatching": "Continue watching",
         "deafened": "Participant is deafened",
         "demote": "Move to viewer",
         "domute": "Mute",
@@ -1788,6 +1789,7 @@
         "domuteOthers": "Mute everyone else",
         "domuteVideo": "Disable camera",
         "domuteVideoOfOthers": "Disable camera of everyone else",
+        "dontWatch": "Don't watch",
         "flip": "Flip",
         "grantModerator": "Grant Moderator Rights",
         "hideSelfView": "Hide self view",

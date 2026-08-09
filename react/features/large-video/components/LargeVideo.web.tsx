@@ -65,6 +65,11 @@ interface IProps {
     _isDisplayNameVisible: boolean;
 
     /**
+     * Whether the local user chose not to receive the current remote video.
+     */
+    _isPersonalVideoMuted: boolean;
+
+    /**
      * Whether or not the local screen share is on large-video.
      */
     _isScreenSharing: boolean;
@@ -203,6 +208,7 @@ class LargeVideo extends Component<IProps> {
             _displayScreenSharingPlaceholder,
             _isChatOpen,
             _isDisplayNameVisible,
+            _isPersonalVideoMuted,
             _noAutoPlayVideo,
             _showDominantSpeakerBadge,
             _whiteboardEnabled,
@@ -249,6 +255,7 @@ class LargeVideo extends Component<IProps> {
                         role = 'figure' >
                         <video
                             autoPlay = { !_noAutoPlayVideo }
+                            hidden = { _isPersonalVideoMuted }
                             id = 'largeVideo'
                             muted = { true }
                             playsInline = { true } /* for Safari on iOS to work */ />
@@ -391,6 +398,8 @@ function _mapStateToProps(state: IReduxState) {
         _largeVideoParticipantId: largeVideoParticipant?.id ?? '',
         _localParticipantId: localParticipantId ?? '',
         _noAutoPlayVideo: Boolean(testingConfig?.noAutoPlayVideo),
+        _isPersonalVideoMuted: Boolean(
+            state['features/filmstrip'].personalVideoMutes[largeVideoParticipant?.id ?? '']),
         _resizableFilmstrip: isFilmstripResizable(state),
         _seeWhatIsBeingShared: Boolean(seeWhatIsBeingShared),
         _showDominantSpeakerBadge: !hideDominantSpeakerBadge,

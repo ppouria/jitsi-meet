@@ -95,6 +95,11 @@ export const SET_VOLUME = 'SET_VOLUME';
 export const SET_PERSONAL_AUDIO_MUTE = 'SET_PERSONAL_AUDIO_MUTE';
 
 /**
+ * The type of action which stops or resumes receiving one remote video locally.
+ */
+export const SET_PERSONAL_VIDEO_MUTE = 'SET_PERSONAL_VIDEO_MUTE';
+
+/**
  * The type of the action which sets the list of visible remote participants in the filmstrip by storing the start and
  * end index in the remote participants array.
  *

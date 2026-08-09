@@ -6,8 +6,10 @@ import { getSsrcRewritingFeatureFlag } from '../base/config/functions.any';
 import { MEDIA_TYPE, VIDEO_TYPE } from '../base/media/constants';
 import {
     getLocalParticipant,
+    getParticipantById,
     getSourceNamesByMediaTypeAndParticipant,
-    getSourceNamesByVideoTypeAndParticipant
+    getSourceNamesByVideoTypeAndParticipant,
+    isRemoteScreenshareParticipant
 } from '../base/participants/functions';
 import StateListenerRegistry from '../base/redux/StateListenerRegistry';
 import { getTrackSourceNameByMediaTypeAndParticipant } from '../base/tracks/functions';
@@ -17,6 +19,7 @@ import {
     getScreenshareFilmstripParticipantId,
     isTopPanelEnabled
 } from '../filmstrip/functions';
+import { applyPersonalVideoMutes } from '../filmstrip/personalVideoMute';
 import { LAYOUTS } from '../video-layout/constants';
 import {
     getCurrentLayout,
@@ -84,6 +87,12 @@ StateListenerRegistry.register(
 StateListenerRegistry.register(
     /* selector */ state => state['features/base/lastn'].lastN,
     /* listener */ (lastN, store) => {
+        _updateReceiverVideoConstraints(store);
+    });
+
+StateListenerRegistry.register(
+    /* selector */ state => state['features/filmstrip'].personalVideoMutes,
+    /* listener */ (_, store) => {
         _updateReceiverVideoConstraints(store);
     });
 
@@ -345,6 +354,30 @@ function _getSourceNames(participantList: Array<string>, state: IReduxState): Ar
 }
 
 /**
+ * Returns the source names which the local user chose not to receive.
+ *
+ * @param {Object} state - The Redux state.
+ * @returns {Array<string>}
+ */
+function _getPersonallyMutedSourceNames(state: IReduxState): string[] {
+    const { personalVideoMutes } = state['features/filmstrip'];
+
+    return Object.keys(personalVideoMutes)
+        .filter(participantId => personalVideoMutes[participantId])
+        .flatMap(participantId => {
+            const participant = getParticipantById(state, participantId);
+
+            if (isRemoteScreenshareParticipant(participant)) {
+                return [ participantId ];
+            }
+
+            return getSsrcRewritingFeatureFlag(state)
+                ? getSourceNamesByVideoTypeAndParticipant(state, participantId, VIDEO_TYPE.CAMERA)
+                : _getSourceNames([ participantId ], state);
+        });
+}
+
+/**
  * Helper function for updating the preferred sender video constraint, based on the user preference.
  *
  * @param {number} preferred - The user preferred max frame height.
@@ -507,6 +540,8 @@ function _updateReceiverVideoConstraints({ getState }: IStore) {
             receiverConstraints.onStageSources = [ largeVideoSourceName ];
         }
     }
+
+    applyPersonalVideoMutes(receiverConstraints, _getPersonallyMutedSourceNames(state));
 
     try {
         conference.setReceiverConstraints(receiverConstraints);

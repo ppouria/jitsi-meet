@@ -1631,6 +1631,7 @@
     },
     "videothumbnail": {
         "connectionInfo": "اطلاعات اتصال",
+        "continueWatching": "ادامهٔ تماشا",
         "deafened": "شرکت‌کننده حالت قطع کامل صدا را فعال کرده است",
         "demote": "تبدیل به بیننده",
         "domute": "قطع صدا",
@@ -1639,6 +1640,7 @@
         "domuteOthers": "قطع صدا بقیه افراد",
         "domuteVideo": "غیرفعال‌کردن دوربین",
         "domuteVideoOfOthers": "غیرفعال‌کردن دوربین بقیه افراد",
+        "dontWatch": "تماشا نکن",
         "flip": "برگرداندن تصویر",
         "grantModerator": "اعطای اجازه‌های مدیر",
         "hideSelfView": "مخفی‌کردن نمای خود",

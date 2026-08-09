@@ -10,6 +10,7 @@ import {
     SET_FILMSTRIP_WIDTH,
     SET_HORIZONTAL_VIEW_DIMENSIONS,
     SET_PERSONAL_AUDIO_MUTE,
+    SET_PERSONAL_VIDEO_MUTE,
     SET_REMOTE_PARTICIPANTS,
     SET_SCREENSHARE_FILMSTRIP_PARTICIPANT,
     SET_SCREENSHARING_TILE_DIMENSIONS,
@@ -70,6 +71,13 @@ const DEFAULT_STATE = {
      * @type {Object}
      */
     personalAudioMutes: {},
+
+    /**
+     * Remote video sources which the local user chose not to receive.
+     *
+     * @type {Object}
+     */
+    personalVideoMutes: {},
 
     /**
      * The ordered IDs of the remote participants displayed in the filmstrip.
@@ -233,6 +241,9 @@ export interface IFilmstripState {
     personalAudioMutes: {
         [participantId: string]: PersonalAudioMuteState;
     };
+    personalVideoMutes: {
+        [participantId: string]: boolean;
+    };
     remoteParticipants: string[];
     screenshareFilmstripDimensions: {
         filmstripHeight?: number;
@@ -333,6 +344,14 @@ ReducerRegistry.register<IFilmstripState>(
                     }
                 }
             };
+        case SET_PERSONAL_VIDEO_MUTE:
+            return {
+                ...state,
+                personalVideoMutes: {
+                    ...state.personalVideoMutes,
+                    [action.participantId]: action.muted
+                }
+            };
         case SET_VISIBLE_REMOTE_PARTICIPANTS: {
             const { endIndex, startIndex, fullyVisibleCount } = action;
             const { remoteParticipants } = state;
@@ -354,6 +373,7 @@ ReducerRegistry.register<IFilmstripState>(
             }
             delete state.participantsVolume[id];
             delete state.personalAudioMutes[id];
+            delete state.personalVideoMutes[id];
 
             return {
                 ...state

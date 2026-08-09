@@ -3,12 +3,14 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 
 import TogglePinToStageButton from '../../../../features/video-menu/components/web/TogglePinToStageButton';
+import { IReduxState } from '../../../app/types';
 import Avatar from '../../../base/avatar/components/Avatar';
-import { IconPlay } from '../../../base/icons/svg';
-import { isWhiteboardParticipant } from '../../../base/participants/functions';
+import { IconPlay, IconVideo, IconVideoOff } from '../../../base/icons/svg';
+import { isRemoteScreenshareParticipant, isWhiteboardParticipant } from '../../../base/participants/functions';
 import { IParticipant } from '../../../base/participants/types';
 import ContextMenu from '../../../base/ui/components/web/ContextMenu';
 import ContextMenuItemGroup from '../../../base/ui/components/web/ContextMenuItemGroup';
+import { setPersonalVideoMute } from '../../../filmstrip/actions.web';
 import { stopSharedVideo } from '../../../shared-video/actions';
 import { getParticipantMenuButtonsWithNotifyClick, showOverflowDrawer } from '../../../toolbox/functions.web';
 import { NOTIFY_CLICK_MODE } from '../../../toolbox/types';
@@ -89,6 +91,8 @@ const FakeParticipantContextMenu = ({
     const { t } = useTranslation();
     const _overflowDrawer: boolean = useSelector(showOverflowDrawer);
     const buttonsWithNotifyClick = useSelector(getParticipantMenuButtonsWithNotifyClick);
+    const _videoMutedForMe = useSelector((state: IReduxState) =>
+        Boolean(state['features/filmstrip'].personalVideoMutes[participant.id]));
 
     const notifyClick = useCallback(
         (buttonKey: string, participantId?: string) => {
@@ -118,6 +122,11 @@ const FakeParticipantContextMenu = ({
         dispatch(setWhiteboardOpen(false));
     }, [ setWhiteboardOpen ]);
 
+    const _onToggleVideoForMe = useCallback(() => {
+        clickHandler();
+        dispatch(setPersonalVideoMute(participant.id, !_videoMutedForMe));
+    }, [ dispatch, participant.id, _videoMutedForMe ]);
+
     const _getActions = useCallback(() => {
         if (isWhiteboardParticipant(participant)) {
             return [ {
@@ -125,6 +134,17 @@ const FakeParticipantContextMenu = ({
                 icon: IconPlay,
                 onClick: _onHideWhiteboard,
                 text: t('toolbar.hideWhiteboard')
+            } ];
+        }
+
+        if (isRemoteScreenshareParticipant(participant)) {
+            const text = t(`videothumbnail.${_videoMutedForMe ? 'continueWatching' : 'dontWatch'}`);
+
+            return [ {
+                accessibilityLabel: text,
+                icon: _videoMutedForMe ? IconVideo : IconVideoOff,
+                onClick: _onToggleVideoForMe,
+                text
             } ];
         }
 
@@ -136,7 +156,7 @@ const FakeParticipantContextMenu = ({
                 text: t('toolbar.stopSharedVideo')
             } ];
         }
-    }, [ localVideoOwner, participant.fakeParticipant ]);
+    }, [ localVideoOwner, participant.fakeParticipant, _videoMutedForMe, _onToggleVideoForMe ]);
 
     return (
         <ContextMenu

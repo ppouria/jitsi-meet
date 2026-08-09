@@ -151,6 +151,11 @@ export interface IProps extends WithTranslation {
     _isMobilePortrait: boolean;
 
     /**
+     * Whether the local user chose not to receive this video.
+     */
+    _isPersonalVideoMuted: boolean;
+
+    /**
      * Indicates whether the participant is screen sharing.
      */
     _isScreenSharing: boolean;
@@ -597,6 +602,7 @@ class Thumbnail extends Component<IProps, IState> {
             _height,
             _isVirtualScreenshareParticipant,
             _isHidden,
+            _isPersonalVideoMuted,
             _isScreenSharing,
             _participant,
             _thumbnailType,
@@ -634,7 +640,11 @@ class Thumbnail extends Component<IProps, IState> {
             || _disableTileEnlargement
             || _isScreenSharing;
 
-        if (canPlayEventReceived || _participant.local || _isVirtualScreenshareParticipant) {
+        if (_isPersonalVideoMuted) {
+            videoStyles = {
+                display: 'none'
+            };
+        } else if (canPlayEventReceived || _participant.local || _isVirtualScreenshareParticipant) {
             videoStyles = {
                 objectFit: doNotStretchVideo ? 'contain' : 'cover'
             };
@@ -1313,6 +1323,7 @@ function _mapStateToProps(state: IReduxState, ownProps: any): Object {
         _isDominantSpeakerDisabled: interfaceConfig.DISABLE_DOMINANT_SPEAKER_INDICATOR,
         _isMobile,
         _isMobilePortrait,
+        _isPersonalVideoMuted: Boolean(state['features/filmstrip'].personalVideoMutes[id]),
         _isScreenSharing: _videoTrack?.videoType === 'desktop',
         _isVideoPlayable: id && isVideoPlayable(state, id),
         _isVirtualScreenshareParticipant,

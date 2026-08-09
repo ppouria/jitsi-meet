@@ -101,16 +101,27 @@ const ThumbnailTopIndicators = ({
 
     if (isVirtualScreenshareParticipant) {
         return (
-            <div className = { styles.container }>
-                {!_connectionIndicatorDisabled
-                    && <ConnectionIndicator
-                        alwaysVisible = { showConnectionIndicator }
-                        enableStatsDisplay = { true }
-                        iconSize = { _indicatorIconSize }
+            <>
+                <div className = { styles.container }>
+                    {!_connectionIndicatorDisabled
+                        && <ConnectionIndicator
+                            alwaysVisible = { showConnectionIndicator }
+                            enableStatsDisplay = { true }
+                            iconSize = { _indicatorIconSize }
+                            participantId = { participantId }
+                            statsPopoverPosition = { STATS_POPOVER_POSITION[thumbnailType] } />
+                    }
+                </div>
+                {!local && <div className = { styles.container }>
+                    <VideoMenuTriggerButton
+                        hidePopover = { hidePopover }
                         participantId = { participantId }
-                        statsPopoverPosition = { STATS_POPOVER_POSITION[thumbnailType] } />
-                }
-            </div>
+                        popoverVisible = { popoverVisible }
+                        showPopover = { showPopover }
+                        thumbnailType = { thumbnailType }
+                        visible = { isHovered || Boolean(popoverVisible) } />
+                </div>}
+            </>
         );
     }
 

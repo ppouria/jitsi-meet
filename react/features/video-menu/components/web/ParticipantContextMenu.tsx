@@ -9,7 +9,7 @@ import { MEDIA_TYPE as AVM_MEDIA_TYPE } from '../../../av-moderation/constants';
 import { isSupported as isAvModerationSupported, isForceMuted } from '../../../av-moderation/functions';
 import Avatar from '../../../base/avatar/components/Avatar';
 import { isIosMobileBrowser, isMobileBrowser } from '../../../base/environment/utils';
-import { IconMic, IconMicSlash, IconVolumeOff, IconVolumeUp } from '../../../base/icons/svg';
+import { IconMic, IconMicSlash, IconVideo, IconVideoOff, IconVolumeOff, IconVolumeUp } from '../../../base/icons/svg';
 import { MEDIA_TYPE } from '../../../base/media/constants';
 import { PARTICIPANT_ROLE } from '../../../base/participants/constants';
 import { getLocalParticipant, hasRaisedHand, isPrivateChatEnabled } from '../../../base/participants/functions';
@@ -21,7 +21,12 @@ import ContextMenuItemGroup from '../../../base/ui/components/web/ContextMenuIte
 import { getBreakoutRooms, getCurrentRoomId, isInBreakoutRoom } from '../../../breakout-rooms/functions';
 import { IRoom } from '../../../breakout-rooms/types';
 import { displayVerification } from '../../../e2ee/functions';
-import { setPersonalAudioMute, setPersonalAudioMuteForParticipant, setVolume } from '../../../filmstrip/actions.web';
+import {
+    setPersonalAudioMute,
+    setPersonalAudioMuteForParticipant,
+    setPersonalVideoMute,
+    setVolume
+} from '../../../filmstrip/actions.web';
 import { isStageFilmstripAvailable } from '../../../filmstrip/functions.web';
 import { QUICK_ACTION_BUTTON } from '../../../participants-pane/constants';
 import { getQuickActionButtonType } from '../../../participants-pane/functions';
@@ -156,13 +161,14 @@ const ParticipantContextMenu = ({
     const _audioTranslationAvailable = useSelector(isAudioTranslationAvailable);
     const visitorsSupported = useSelector((state: IReduxState) => state['features/visitors'].supported);
     const { disableDemote, disableKick, disableGrantModerator } = remoteVideoMenu;
-    const { participantsVolume, personalAudioMutes } = useSelector(
+    const { participantsVolume, personalAudioMutes, personalVideoMutes } = useSelector(
         (state: IReduxState) => state['features/filmstrip']);
     const _volume = (participant?.local ?? true ? undefined
         : participant?.id ? participantsVolume[participant?.id] : undefined) ?? 1;
     const _personalAudioMute = personalAudioMutes[participant.id];
     const _mutedForMe = Boolean(_personalAudioMute?.forMe);
     const _mutedMeForParticipant = Boolean(_personalAudioMute?.forParticipant);
+    const _videoMutedForMe = Boolean(personalVideoMutes[participant.id]);
     const [ _soundpadBlocked, setSoundpadBlockedState ] = useState(() => isSoundpadBlocked(participant.id));
 
     useEffect(() => setSoundpadBlockedState(isSoundpadBlocked(participant.id)), [ participant.id ]);
@@ -186,6 +192,9 @@ const ParticipantContextMenu = ({
     const _onMuteMeForParticipant = useCallback(() => {
         dispatch(setPersonalAudioMuteForParticipant(participant.id, !_mutedMeForParticipant));
     }, [ dispatch, participant.id, _mutedMeForParticipant ]);
+    const _onToggleVideoForMe = useCallback(() => {
+        dispatch(setPersonalVideoMute(participant.id, !_videoMutedForMe));
+    }, [ dispatch, participant.id, _videoMutedForMe ]);
     const _onToggleSoundpad = useCallback(() => {
         const blocked = !_soundpadBlocked;
 
@@ -238,8 +247,15 @@ const ParticipantContextMenu = ({
         const muteMeForParticipantText = t(
             `participantsPane.actions.${_mutedMeForParticipant ? 'unmuteMeForParticipant' : 'muteMeForParticipant'}`);
         const soundpadText = t(`soundpad.${_soundpadBlocked ? 'allowParticipant' : 'blockParticipant'}`);
+        const videoForMeText = t(`videothumbnail.${_videoMutedForMe ? 'continueWatching' : 'dontWatch'}`);
 
         buttons.push(
+            <ContextMenuItem
+                accessibilityLabel = { videoForMeText }
+                icon = { _videoMutedForMe ? IconVideo : IconVideoOff }
+                key = 'toggle-video-for-me'
+                onClick = { _onToggleVideoForMe }
+                text = { videoForMeText } />,
             <ContextMenuItem
                 accessibilityLabel = { muteForMeText }
                 icon = { _mutedForMe ? IconVolumeUp : IconVolumeOff }

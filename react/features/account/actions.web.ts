@@ -13,6 +13,7 @@ import { AccountAPIError, accountAPI } from './api';
 import AccountAuthDialog from './components/web/AccountAuthDialog';
 import { updateAccountState } from './reducer';
 import { acquireBrowserRoomLock, releaseBrowserRoomLock } from './roomLock.web';
+import { aggregateAccountStats } from './stats';
 import {
     ACCOUNT_ROOM_CLOSED_COMMAND,
     IAccountProfile,
@@ -175,7 +176,7 @@ export function loadAccountStats() {
 
         const result = await accountAPI<{ items: IAccountStat[]; }>(serviceURL, '/stats/me?days=7');
 
-        return result.items ?? [];
+        return aggregateAccountStats(result.items ?? []);
     };
 }
 

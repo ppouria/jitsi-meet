@@ -28,7 +28,11 @@ import { ISecondScreenSource } from '../../../multi-screen/types';
 import { QUICK_ACTION_BUTTON } from '../../../participants-pane/constants';
 import { getQuickActionButtonType } from '../../../participants-pane/functions';
 import { requestRemoteControl, stopController } from '../../../remote-control/actions';
-import { isSoundpadBlocked, setSoundpadBlocked } from '../../../soundpad/functions.web';
+import {
+    isSoundpadBlocked,
+    isSoundpadParticipantPlaying,
+    setSoundpadBlocked
+} from '../../../soundpad/functions.web';
 import { getParticipantMenuButtonsWithNotifyClick, showOverflowDrawer } from '../../../toolbox/functions.web';
 import { NOTIFY_CLICK_MODE } from '../../../toolbox/types';
 import { PARTICIPANT_MENU_BUTTONS as BUTTONS } from '../../constants';
@@ -188,8 +192,9 @@ const ParticipantContextMenu = ({
         const blocked = !_soundpadBlocked;
 
         setSoundpadBlocked(participant.id, blocked);
+        dispatch(setPersonalAudioMute(participant.id, 'soundpad', blocked && isSoundpadParticipantPlaying(participant.id)));
         setSoundpadBlockedState(blocked);
-    }, [ participant.id, _soundpadBlocked ]);
+    }, [ dispatch, participant.id, _soundpadBlocked ]);
 
     const _getCurrentParticipantId = useCallback(() => {
         const drawer = _overflowDrawer && !thumbnailMenu;

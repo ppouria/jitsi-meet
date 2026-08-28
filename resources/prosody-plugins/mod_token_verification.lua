@@ -119,7 +119,8 @@ local function has_duplicate_account(room, session)
         for full_jid in pairs(occupant.sessions) do
             local occupant_session = prosody.full_sessions[full_jid];
             local occupant_user = occupant_session and occupant_session.jitsi_meet_context_user;
-            if occupant_session ~= session and occupant_user and occupant_user.id == user_id then
+            if occupant_session ~= session and occupant_user and occupant_user.id == user_id
+                    and (not session.previd or occupant_session.resumption_token ~= session.previd) then
                 return true;
             end
         end

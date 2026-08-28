@@ -189,6 +189,29 @@ describe('mod_token_verification', () => {
             assert.ok(presence.getChild('error')?.getChild('not-allowed'));
         });
 
+        it('allows the same account to reconnect with its stream management token', async () => {
+            const room = await setupRoom();
+            const token = mintAsapToken({ room: room.split('@')[0],
+                context: { user: { id: 'reconnecting-user' } } });
+            const first = await createXmppClient({ params: { token } });
+
+            clients.push(first);
+            assert.ok(isAvailablePresence(await first.joinRoom(room)));
+
+            const smId = first.smId;
+            const username = first.jid.split('@')[0];
+
+            assert.ok(smId);
+            first.dropConnection();
+
+            const resumed = await createXmppClient({ params: { previd: smId,
+                token } });
+
+            clients.push(resumed);
+            assert.strictEqual(resumed.jid.split('@')[0], username);
+            assert.ok(isAvailablePresence(await resumed.joinRoom(room)));
+        });
+
         it('allows the same account to join different rooms', async () => {
             const firstRoom = await setupRoom();
             const secondRoom = await setupRoom();

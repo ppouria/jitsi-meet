@@ -44,7 +44,9 @@ jobs:
       - name: Install client dependencies
         run: npm ci --no-audit
       - name: Build NSIS installer
-        run: npm run tauri build
+        run: |
+          Remove-Item -Recurse -Force src-tauri/target/release/bundle -ErrorAction SilentlyContinue
+          npm run tauri build
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: mazholl-voice-windows-${{ github.sha }}

@@ -1,0 +1,12 @@
+{
+  "name": "mazholl-voice-windows",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.11.4"
+  }
+}
+

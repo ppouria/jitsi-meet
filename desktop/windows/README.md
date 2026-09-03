@@ -4,6 +4,10 @@ A small Tauri shell for `https://voice.mazholl.com`. It uses the shared Windows
 WebView2 runtime instead of shipping Electron or another Chromium copy, so the
 server remains the single source of truth for all meeting features and updates.
 
+The client starts with the camera off and receives one active remote video. When
+its window loses focus, WebView2 switches to its low-memory target; focusing the
+window restores normal performance. Audio and active meetings keep running.
+
 ## Build
 
 Install the [Tauri Windows prerequisites](https://v2.tauri.app/start/prerequisites/), then run:
@@ -14,4 +18,3 @@ npm run tauri build
 ```
 
 The NSIS installer is written to `src-tauri/target/release/bundle/nsis/`.
-

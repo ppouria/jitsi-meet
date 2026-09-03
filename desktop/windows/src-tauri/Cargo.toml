@@ -1,13 +1,16 @@
 [package]
 name = "mazholl-voice"
-version = "0.1.0"
+version = "0.2.0"
 description = "Lightweight Windows client for Mazholl Voice"
 authors = ["Mazholl"]
 edition = "2021"
 
 [build-dependencies]
-tauri-build = { version = "2", features = [] }
+tauri-build = { version = "=2.6.3", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = [] }
+tauri = { version = "=2.11.5", features = [] }
 
+[target.'cfg(windows)'.dependencies]
+webview2-com = "=0.38.2"
+windows = "=0.61.3"

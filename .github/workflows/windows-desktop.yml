@@ -42,7 +42,7 @@ jobs:
           key: windows-tauri-${{ hashFiles('desktop/windows/src-tauri/Cargo.lock') }}
           restore-keys: windows-tauri-
       - name: Install client dependencies
-        run: npm ci
+        run: npm ci --no-audit
       - name: Build NSIS installer
         run: npm run tauri build
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

@@ -75,7 +75,7 @@ export interface IShareOptions {
     // Direct-cast screenshare: a screenshare arriving over a plain RTCPeerConnection can
     // carry system audio too. When present alongside
     // desktopStream, this audio track is published via the native screenshare-audio
-    // path (AudioMixer effect + setScreenshareAudioTrack).
+    // path as a separate conference audio source.
     desktopAudioTrack?: any;
     desktopSharingSourceDevice?: string;
     desktopSharingSources?: Array<DesktopSharingSourceType>;

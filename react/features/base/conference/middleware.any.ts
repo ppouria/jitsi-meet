@@ -29,7 +29,6 @@ import { INotificationProps } from '../../notifications/types';
 import { hasDisplayName } from '../../prejoin/utils';
 import { stopLocalVideoRecording } from '../../recording/actions.any';
 import LocalRecordingManager from '../../recording/components/Recording/LocalRecordingManager';
-import { AudioMixerEffect } from '../../stream-effects/audio-mixer/AudioMixerEffect';
 import { iAmVisitor } from '../../visitors/functions';
 import { configWillLoad, overwriteConfig, setConfig } from '../config/actions';
 import { buildConfigURL } from '../config/functions.any';
@@ -38,7 +37,6 @@ import { connect, connectionDisconnected, disconnect, setPreferVisitor } from '.
 import { validateJwt } from '../jwt/functions';
 import { JitsiConferenceErrors, JitsiConferenceEvents, JitsiConnectionErrors } from '../lib-jitsi-meet';
 import { loadConfig } from '../lib-jitsi-meet/functions';
-import { MEDIA_TYPE } from '../media/constants';
 import { PARTICIPANT_ROLE_CHANGED, PARTICIPANT_UPDATED, PIN_PARTICIPANT } from '../participants/actionTypes';
 import { PARTICIPANT_ROLE } from '../participants/constants';
 import {
@@ -890,42 +888,35 @@ async function _trackAddedOrRemoved(store: IStore, next: Function, action: AnyAc
                 // If gUM is slow and tracks are created after the user has already joined the conference, avoid
                 // adding the tracks to the conference if the user is a visitor.
                 if (!iAmVisitor(state)) {
+                    try {
+                        await _addLocalTracksToConference(conference, [ jitsiTrack ]);
+                    } catch (error) {
+                        logger.error(
+                            `Conference refused local ${track.mediaType} track, discarding it`, error);
+
+                        jitsiTrack.dispose?.().catch(() => { /* may already be disposed */ });
+
+                        // Clears a pending TRACK_WILL_CREATE stub when no ready track of this type remains.
+                        if (!getLocalTrack(getState()['features/base/tracks'], track.mediaType)) {
+                            store.dispatch({
+                                type: TRACK_CREATE_CANCELED,
+                                trackType: track.mediaType
+                            });
+                        }
+
+                        return;
+                    }
+
                     const { desktopAudioTrack } = state['features/screen-share'];
 
-                    // If the user is sharing their screen and has a desktop audio track, we need to replace that with
-                    // the audio mixer effect so that the desktop audio is mixed in with the microphone audio.
-                    if (typeof APP !== 'undefined' && desktopAudioTrack && track.mediaType === MEDIA_TYPE.AUDIO) {
-                        await conference.replaceTrack(desktopAudioTrack, null);
-                        const audioMixerEffect = new AudioMixerEffect(desktopAudioTrack);
+                    // Desktop audio is not kept in the Redux track list. Restore it explicitly after a conference or
+                    // breakout-room switch while keeping it separate from the microphone.
+                    if (desktopAudioTrack && !conference.getLocalTracks().includes(desktopAudioTrack)) {
+                        await _addLocalTracksToConference(conference, [ desktopAudioTrack ]);
 
-                        await jitsiTrack.setEffect(audioMixerEffect);
-
-                        // Only add the track to the conference if it isn't already there. During a breakout room
-                        // switch, replaceLocalTrack already called conference.replaceTrack which invoked
-                        // _setupNewTrack and pushed the track into rtc.localTracks. A second replaceTrack(null,
-                        // track) call would push it again, creating a duplicate that makes setOfferAnswerCycle
-                        // fail with "is already in TPC" when the JVB session offer arrives.
-                        if (!conference.getLocalTracks().includes(jitsiTrack)) {
-                            await conference.replaceTrack(null, jitsiTrack);
-                        }
-                    } else {
-                        try {
-                            await _addLocalTracksToConference(conference, [ jitsiTrack ]);
-                        } catch (error) {
-                            logger.error(
-                                `Conference refused local ${track.mediaType} track, discarding it`, error);
-
-                            jitsiTrack.dispose?.().catch(() => { /* may already be disposed */ });
-
-                            // Clears a pending TRACK_WILL_CREATE stub when no ready track of this type remains.
-                            if (!getLocalTrack(getState()['features/base/tracks'], track.mediaType)) {
-                                store.dispatch({
-                                    type: TRACK_CREATE_CANCELED,
-                                    trackType: track.mediaType
-                                });
-                            }
-
-                            return;
+                        if (conference.getLocalTracks().includes(desktopAudioTrack)) {
+                            conference.setLocalParticipantProperty(
+                                'screenShareAudioSource', desktopAudioTrack.getSourceName());
                         }
                     }
                 }

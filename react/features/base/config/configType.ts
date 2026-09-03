@@ -600,6 +600,7 @@ export interface IConfig {
         iceTransportPolicy?: string;
         mobileCodecPreferenceOrder?: Array<string>;
         mobileScreenshareCodec?: string;
+        screenshareCodec?: string;
         stunServers?: Array<{ urls: string; }>;
     };
     participantMenuButtonsWithNotifyClick?: Array<string | ParticipantMenuButtonsWithNotifyClick | {
@@ -736,6 +737,7 @@ export interface IConfig {
     subject?: string;
     systemWideUserNotification?: ISystemWideUserNotificationConfig;
     testing?: {
+        allowMultipleTracks?: boolean;
         assumeBandwidth?: boolean;
         debugAudioLevels?: boolean;
         disableAV1DecodeForFF?: boolean;
@@ -808,6 +810,7 @@ export interface IConfig {
     useTurnUdp?: boolean;
     videoQuality?: {
         codecPreferenceOrder?: Array<string>;
+        enableAdaptiveMode?: boolean;
         maxBitratesVideo?: {
             [key: string]: {
                 high?: number;
@@ -819,7 +822,22 @@ export interface IConfig {
             [key: number]: string;
         };
         mobileCodecPreferenceOrder?: Array<string>;
+        mobileScreenshareCodec?: string;
         persist?: boolean;
+        screenshareCodec?: string;
+        vp9?: {
+            maxBitratesVideo?: {
+                fullHd?: number;
+                high?: number;
+                low?: number;
+                ssHigh?: number;
+                standard?: number;
+                ultraHd?: number;
+            };
+            scalabilityModeEnabled?: boolean;
+            useKSVC?: boolean;
+            useSimulcast?: boolean;
+        };
     };
     virtualBackground?: IVirtualBackgroundConfig;
     visitors?: {

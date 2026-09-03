@@ -1,10 +1,9 @@
 // @ts-expect-error
 import { AUDIO_ONLY_SCREEN_SHARE_NO_TRACK } from '../../../../modules/UI/UIErrors';
-import { IReduxState, IStore } from '../../app/types';
+import { IStore } from '../../app/types';
 import { showModeratedNotification } from '../../av-moderation/actions';
 import { MEDIA_TYPE as AVM_MEDIA_TYPE } from '../../av-moderation/constants';
 import { shouldShowModeratedNotification } from '../../av-moderation/functions';
-import { setNoiseSuppressionEnabled } from '../../noise-suppression/actions';
 import { showErrorNotification, showNotification } from '../../notifications/actions';
 import { NOTIFICATION_TIMEOUT_TYPE } from '../../notifications/constants';
 import { stopReceiver } from '../../remote-control/actions';
@@ -13,7 +12,6 @@ import { isAudioOnlySharing, isScreenVideoShared } from '../../screen-share/func
 import { toggleScreenshotCaptureSummary } from '../../screenshot-capture/actions';
 import { isScreenshotCaptureEnabled } from '../../screenshot-capture/functions';
 import { setAudioSettings } from '../../settings/actions.web';
-import { AudioMixerEffect } from '../../stream-effects/audio-mixer/AudioMixerEffect';
 import { getCurrentConference } from '../conference/functions';
 import { notifyCameraError, notifyMicError } from '../devices/actions.web';
 import { openDialog } from '../dialog/actions';
@@ -35,7 +33,6 @@ import AllowToggleCameraDialog from './components/web/AllowToggleCameraDialog';
 import {
     createLocalTracksF,
     getLocalDesktopTrack,
-    getLocalJitsiAudioTrack,
     getLocalVideoTrack,
     isToggleCameraEnabled
 } from './functions';
@@ -87,27 +84,17 @@ export function toggleScreensharing(
 
 
 /**
- * Applies the AudioMixer effect on the local audio track if applicable. If there is no local audio track, the desktop
- * audio track is added to the conference.
+ * Adds desktop audio as a separate conference source so receivers can control it independently from the microphone.
  *
  * @private
  * @param {JitsiLocalTrack} desktopAudioTrack - The audio track to be added to the conference.
- * @param {*} state - The redux state.
+ * @param {*} conference - The current conference.
  * @returns {void}
  */
-async function _maybeApplyAudioMixerEffect(desktopAudioTrack: any, state: IReduxState): Promise<void> {
-    const localAudio = getLocalJitsiAudioTrack(state);
-    const conference = getCurrentConference(state);
-
-    if (localAudio) {
-        // If there is a localAudio stream, mix in the desktop audio stream captured by the screen sharing API.
-        const mixerEffect = new AudioMixerEffect(desktopAudioTrack);
-
-        await localAudio.setEffect(mixerEffect);
-    } else {
-        // If no local stream is present ( i.e. no input audio devices) we use the screen share audio
-        // stream as we would use a regular stream.
-        await conference?.replaceTrack(null, desktopAudioTrack);
+async function _addDesktopAudioTrack(desktopAudioTrack: any, conference: any): Promise<void> {
+    if (conference && !conference.getLocalTracks().includes(desktopAudioTrack)) {
+        await conference.addTrack(desktopAudioTrack);
+        conference.setLocalParticipantProperty('screenShareAudioSource', desktopAudioTrack.getSourceName());
     }
 }
 
@@ -132,7 +119,6 @@ async function _toggleScreenSharing(
     const audioOnlySharing = isAudioOnlySharing(state);
     const screenSharing = isScreenVideoShared(state);
     const conference = getCurrentConference(state);
-    const localAudio = getLocalJitsiAudioTrack(state);
     const localScreenshare = getLocalDesktopTrack(state['features/base/tracks']);
 
     // Toggle screenshare or audio-only share if the new state is not passed. Happens in the following two cases.
@@ -151,8 +137,8 @@ async function _toggleScreenSharing(
             tracks = [ shareOptions.desktopStream ];
 
             // A direct-cast share can carry system audio as a second track. Include it
-            // so it rides the native screenshare-audio path below (AudioMixer effect +
-            // setScreenshareAudioTrack), exactly like a locally-captured share.
+            // so it rides the native screenshare-audio path below, exactly like a
+            // locally-captured share.
             if (shareOptions.desktopAudioTrack) {
                 tracks.push(shareOptions.desktopAudioTrack);
             }
@@ -201,13 +187,10 @@ async function _toggleScreenSharing(
             screensharingDetails.sourceType = desktopVideoTrack.sourceType;
         }
 
-        // Apply the AudioMixer effect if there is a local audio track, add the desktop track to the conference
-        // otherwise without unmuting the microphone.
+        // Publish desktop audio independently from the microphone. Besides allowing separate receiver volume,
+        // this keeps the media on the regular WebRTC path instead of distributing a file to every receiver.
         if (desktopAudioTrack) {
-            // Noise suppression doesn't work with desktop audio because we can't chain track effects yet, disable it
-            // first. We need to to wait for the effect to clear first or it might interfere with the audio mixer.
-            await dispatch(setNoiseSuppressionEnabled(false));
-            _maybeApplyAudioMixerEffect(desktopAudioTrack, state);
+            await _addDesktopAudioTrack(desktopAudioTrack, conference);
             dispatch(setScreenshareAudioTrack(desktopAudioTrack));
 
             // Handle the case where screen share was stopped from the browsers 'screen share in progress' window.
@@ -240,11 +223,8 @@ async function _toggleScreenSharing(
         // same sender will be re-used without the need for signaling a new ssrc through source-add.
         dispatch(setScreenshareMuted(true));
         if (desktopAudioTrack) {
-            if (localAudio) {
-                localAudio.setEffect(undefined);
-            } else {
-                await conference?.replaceTrack(desktopAudioTrack, null);
-            }
+            await conference?.removeTrack(desktopAudioTrack);
+            conference?.setLocalParticipantProperty('screenShareAudioSource', '');
             desktopAudioTrack.dispose();
             dispatch(setScreenshareAudioTrack(null));
         }

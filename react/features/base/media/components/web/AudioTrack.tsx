@@ -11,6 +11,7 @@ import { isIncomingPersonalAudioMuted } from '../../../../filmstrip/personalAudi
 import { browser } from '../../../lib-jitsi-meet';
 import { ITrack } from '../../../tracks/types';
 import logger from '../../logger';
+import { getTrackVolume } from '../../trackVolume';
 
 // iOS (WebKit) ignores programmatic HTMLMediaElement.volume — it is under the user's hardware control, so
 // assigning it is a no-op. Ducking therefore can't lower the volume there; we fall back to muting the
@@ -362,11 +363,11 @@ function _mapStateToProps(state: IReduxState, ownProps: any) {
     const { participantsVolume, personalAudioMutes } = state['features/filmstrip'];
     const audioTranslationConfigured = Boolean(state['features/base/config'].audioTranslation);
 
-    let _volume: number | boolean | undefined = participantsVolume[ownProps.participantId];
-
     // Driven by actual translated-audio presence, not isAudioTranslationAvailable: ducking follows the
     // media, and must not un-duck mid-playback on a permission/flag change.
     const sourceName: string | undefined = ownProps.audioTrack?.jitsiTrack?.getSourceName?.();
+    let _volume: number | boolean | undefined
+        = getTrackVolume(participantsVolume, ownProps.participantId, sourceName);
     const ducked = shouldDuckOriginalAudio(state, sourceName, ownProps.participantId);
 
     if (ducked) {

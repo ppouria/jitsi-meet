@@ -530,6 +530,12 @@ StateListenerRegistry.register(
                         conference,
                         id: participant.getId(),
                         remoteControlSessionStatus: value
+                    })),
+                'screenShareAudioSource': (participant: IJitsiParticipant, value: string) =>
+                    store.dispatch(participantUpdated({
+                        conference,
+                        id: participant.getId(),
+                        screenShareAudioSource: value || undefined
                     }))
             };
 

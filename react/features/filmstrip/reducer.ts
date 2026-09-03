@@ -371,7 +371,9 @@ ReducerRegistry.register<IFilmstripState>(
             if (local) {
                 return state;
             }
-            delete state.participantsVolume[id];
+            Object.keys(state.participantsVolume)
+                .filter(key => key === id || key.startsWith(`${id}-`))
+                .forEach(key => delete state.participantsVolume[key]);
             delete state.personalAudioMutes[id];
             delete state.personalVideoMutes[id];
 

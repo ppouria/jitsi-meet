@@ -40,6 +40,7 @@ export interface IParticipant {
     region?: string;
     remoteControlSessionStatus?: boolean;
     role?: string;
+    screenShareAudioSource?: string;
     sources?: Map<string, Map<string, ISourceInfo>>;
     supportsRemoteControl?: boolean;
     userContext?: IUserContext;

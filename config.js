@@ -86,6 +86,9 @@ var config = {
     //
 
     testing: {
+        // Desktop audio is published separately from the microphone so receivers can control its volume.
+        allowMultipleTracks: true,
+
         // Allows the setting of a custom bandwidth value from the UI.
         // assumeBandwidth: true,
 
@@ -587,7 +590,25 @@ var config = {
     // value will be used when the quality level is selected using "Manage Video Quality" slider.
     // startLastN: 1,
 
-    // Specify the settings for video quality optimizations on the client.
+    // Use an adaptive screen-share codec so the bridge can send a lower layer to constrained viewers instead of
+    // suspending the stream for them. A lower ceiling also avoids long oversending periods on game connections.
+    videoQuality: {
+        screenshareCodec: 'VP9',
+        vp9: {
+            maxBitratesVideo: {
+                low: 100000,
+                standard: 300000,
+                high: 900000,
+                fullHd: 1200000,
+                ultraHd: 1600000,
+                ssHigh: 1200000
+            },
+            scalabilityModeEnabled: true,
+            useSimulcast: false,
+            useKSVC: true
+        }
+    },
+
     // videoQuality: {
     //
     //    // Provides a way to set the codec preference on desktop based endpoints.
@@ -1132,6 +1153,9 @@ var config = {
         // 3rd participant joins the conference will be moved back to the JVB
         // connection.
         enabled: true,
+
+        // Keep the same screen-share codec when switching between P2P and JVB as participants join or leave.
+        screenshareCodec: 'VP9',
 
         // Sets the ICE transport policy for the p2p connection. At the time
         // of this writing the list of possible values are 'all' and 'relay',

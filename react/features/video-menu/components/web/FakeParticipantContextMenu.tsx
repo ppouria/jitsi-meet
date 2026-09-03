@@ -6,17 +6,24 @@ import TogglePinToStageButton from '../../../../features/video-menu/components/w
 import { IReduxState } from '../../../app/types';
 import Avatar from '../../../base/avatar/components/Avatar';
 import { IconPlay, IconVideo, IconVideoOff } from '../../../base/icons/svg';
-import { isRemoteScreenshareParticipant, isWhiteboardParticipant } from '../../../base/participants/functions';
+import {
+    getParticipantById,
+    getVirtualScreenshareParticipantOwnerId,
+    isRemoteScreenshareParticipant,
+    isWhiteboardParticipant
+} from '../../../base/participants/functions';
 import { IParticipant } from '../../../base/participants/types';
 import ContextMenu from '../../../base/ui/components/web/ContextMenu';
 import ContextMenuItemGroup from '../../../base/ui/components/web/ContextMenuItemGroup';
-import { setPersonalVideoMute } from '../../../filmstrip/actions.web';
+import { setPersonalVideoMute, setVolume } from '../../../filmstrip/actions.web';
 import { stopSharedVideo } from '../../../shared-video/actions';
 import { getParticipantMenuButtonsWithNotifyClick, showOverflowDrawer } from '../../../toolbox/functions.web';
 import { NOTIFY_CLICK_MODE } from '../../../toolbox/types';
 import { setWhiteboardOpen } from '../../../whiteboard/actions';
 import { WHITEBOARD_ID } from '../../../whiteboard/constants';
 import { PARTICIPANT_MENU_BUTTONS as BUTTONS } from '../../constants';
+
+import VolumeSlider from './VolumeSlider';
 
 interface IProps {
 
@@ -93,6 +100,12 @@ const FakeParticipantContextMenu = ({
     const buttonsWithNotifyClick = useSelector(getParticipantMenuButtonsWithNotifyClick);
     const _videoMutedForMe = useSelector((state: IReduxState) =>
         Boolean(state['features/filmstrip'].personalVideoMutes[participant.id]));
+    const _screenShareAudioSource = useSelector((state: IReduxState) =>
+        getParticipantById(state, getVirtualScreenshareParticipantOwnerId(participant.id))?.screenShareAudioSource);
+    const _screenShareVolume = useSelector((state: IReduxState) =>
+        (_screenShareAudioSource
+            ? state['features/filmstrip'].participantsVolume[_screenShareAudioSource]
+            : undefined) ?? 1);
 
     const notifyClick = useCallback(
         (buttonKey: string, participantId?: string) => {
@@ -126,6 +139,12 @@ const FakeParticipantContextMenu = ({
         clickHandler();
         dispatch(setPersonalVideoMute(participant.id, !_videoMutedForMe));
     }, [ dispatch, participant.id, _videoMutedForMe ]);
+
+    const _onScreenShareVolumeChange = useCallback((value: number) => {
+        if (_screenShareAudioSource) {
+            dispatch(setVolume(_screenShareAudioSource, value));
+        }
+    }, [ dispatch, _screenShareAudioSource ]);
 
     const _getActions = useCallback(() => {
         if (isWhiteboardParticipant(participant)) {
@@ -192,6 +211,15 @@ const FakeParticipantContextMenu = ({
                         participantID = { WHITEBOARD_ID } />
                 )}
             </ContextMenuItemGroup>
+
+            {isRemoteScreenshareParticipant(participant) && _screenShareAudioSource && (
+                <ContextMenuItemGroup>
+                    <VolumeSlider
+                        initialValue = { _screenShareVolume }
+                        key = { `volume-${_screenShareAudioSource}` }
+                        onChange = { _onScreenShareVolumeChange } />
+                </ContextMenuItemGroup>
+            )}
 
         </ContextMenu>
     );

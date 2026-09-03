@@ -11,7 +11,6 @@ import { MESSAGE_TYPE_LOCAL, MESSAGE_TYPE_REMOTE } from '../chat/constants';
 import { getAccountServiceURL, leaveAccountRoom } from './actions.web';
 import { accountAPI, buildAccountURL } from './api';
 import { UPDATE_ACCOUNT_STATE, updateAccountState } from './reducer';
-import { releaseBrowserRoomLock } from './roomLock.web';
 import { ACCOUNT_ROOM_CLOSED_COMMAND, IAccountRoom, IAccountRoomMessage } from './types';
 
 const HEARTBEAT_MS = 20_000;
@@ -194,7 +193,6 @@ MiddlewareRegistry.register(store => next => action => {
     case APP_WILL_UNMOUNT:
         sendPresence(store, false).catch(() => undefined);
         stopRoomRuntime();
-        releaseBrowserRoomLock();
         window.removeEventListener('beforeunload', onBeforeUnload);
         activeStore = undefined;
         break;
@@ -204,7 +202,6 @@ MiddlewareRegistry.register(store => next => action => {
     case CONFERENCE_LEFT:
         sendPresence(store, false).catch(() => undefined);
         stopRoomRuntime();
-        releaseBrowserRoomLock();
         break;
     case UPDATE_ACCOUNT_STATE:
         if (accountUserChanged && !wasLoggedIn && action.state.user

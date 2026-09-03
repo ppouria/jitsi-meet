@@ -12,7 +12,6 @@ import { NOTIFICATION_TIMEOUT_TYPE } from '../notifications/constants';
 import { AccountAPIError, accountAPI } from './api';
 import AccountAuthDialog from './components/web/AccountAuthDialog';
 import { updateAccountState } from './reducer';
-import { acquireBrowserRoomLock, releaseBrowserRoomLock } from './roomLock.web';
 import { aggregateAccountStats } from './stats';
 import {
     ACCOUNT_ROOM_CLOSED_COMMAND,
@@ -202,14 +201,6 @@ export async function prepareAccountRoom(
         getState: IStore['getState'],
         config: IConfig | undefined,
         roomName: string): Promise<boolean> {
-    if (!(await acquireBrowserRoomLock(roomName))) {
-        dispatch(showErrorNotification({
-            titleKey: 'account.roomAlreadyOpen'
-        }, NOTIFICATION_TIMEOUT_TYPE.LONG));
-
-        return false;
-    }
-
     const serviceURL = getAccountServiceURL(config);
 
     if (!serviceURL) {
@@ -231,8 +222,6 @@ export async function prepareAccountRoom(
                 }, NOTIFICATION_TIMEOUT_TYPE.LONG));
             }
 
-            releaseBrowserRoomLock();
-
             return false;
         }
 
@@ -242,7 +231,6 @@ export async function prepareAccountRoom(
             dispatch(showErrorNotification({
                 title: retryError instanceof Error ? retryError.message : 'Could not authorize this room.'
             }, NOTIFICATION_TIMEOUT_TYPE.LONG));
-            releaseBrowserRoomLock();
 
             return false;
         }
@@ -252,7 +240,6 @@ export async function prepareAccountRoom(
         dispatch(showErrorNotification({
             title: 'Account service returned an invalid room token.'
         }, NOTIFICATION_TIMEOUT_TYPE.LONG));
-        releaseBrowserRoomLock();
 
         return false;
     }

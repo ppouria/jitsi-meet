@@ -85,6 +85,7 @@ Component "conference.jitmeet.example.com" "muc"
         "muc_meeting_id";
         "muc_domain_mapper";
         --"token_verification";
+        "muc_flip";
         "muc_rate_limit";
         "muc_password_whitelist";
     }

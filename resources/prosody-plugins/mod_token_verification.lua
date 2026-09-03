@@ -108,10 +108,17 @@ local function verify_user(session, stanza)
     return true;
 end
 
-local function has_duplicate_account(room, session)
+local function has_duplicate_account(room, session, stanza)
     local context_user = session.jitsi_meet_context_user;
     local user_id = context_user and context_user.id;
     if not user_id then
+        return false;
+    end
+
+    local features = session.jitsi_meet_context_features;
+    -- mod_muc_flip performs the account match and removes the previous occupant.
+    if stanza:get_child('flip_device') and features
+            and (features.flip == true or features.flip == 'true') then
         return false;
     end
 
@@ -146,7 +153,7 @@ module:hook("muc-occupant-pre-join", function(event)
         measure_fail(1);
         return true; -- Returning any value other than nil will halt processing of the event
     end
-    if has_duplicate_account(room, origin) then
+    if has_duplicate_account(room, origin, stanza) then
         module:log('info', 'Blocked duplicate account from joining room: %s', room.jid);
         origin.send(st.error_reply(stanza, 'cancel', 'not-allowed', 'This account is already in the room.')
             :tag('duplicate-account', { xmlns = 'http://jitsi.org/jitmeet' }));

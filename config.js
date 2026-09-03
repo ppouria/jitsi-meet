@@ -28,6 +28,9 @@ var config = {
     // Same-origin account API used by the native login/profile UI.
     accountServiceUrl: '/account/api',
 
+    // A newer connection for the same account and room replaces the stale one.
+    replaceParticipant: true,
+
     // Connection
     //
 

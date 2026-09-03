@@ -1,3 +1,4 @@
+import { xml } from '@xmpp/client';
 import assert from 'assert';
 
 import { mintAsapToken } from './helpers/jwt.js';
@@ -187,6 +188,28 @@ describe('mod_token_verification', () => {
 
             assert.strictEqual(presence.attrs.type, 'error');
             assert.ok(presence.getChild('error')?.getChild('not-allowed'));
+        });
+
+        it('replaces the previous session when an authorized account rejoins', async () => {
+            const room = await setupRoom();
+            const roomName = room.split('@')[0];
+            const context = {
+                features: { flip: true },
+                user: { id: 'replacement-user' }
+            };
+            const first = await createXmppClient({ params: { token: mintAsapToken({ room: roomName,
+                context }) } });
+            const second = await createXmppClient({ params: { token: mintAsapToken({ room: roomName,
+                context }) } });
+
+            clients.push(first, second);
+
+            const firstPresence = await first.joinRoom(room);
+            const firstKicked = first.waitForPresenceFrom(firstPresence.attrs.from, { type: 'unavailable' });
+            const secondPresence = await second.joinRoom(room, null, { extensions: [ xml('flip_device') ] });
+
+            assert.ok(isAvailablePresence(secondPresence));
+            assert.ok((await firstKicked).getChild('flip_device'));
         });
 
         it('allows the same account to reconnect with its stream management token', async () => {

@@ -1,0 +1,36 @@
+# Builds the Lua 5.4 and Prosody 13 runtime for the Jitsi server, and uploads it as an artifact.
+# Start it with `gh workflow run build-prosody.yml`.
+name: build-prosody
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build prosody runtime
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Lua, Prosody and the Lua libraries
+        run: bash server/scripts/build-prosody.sh
+
+      - name: Archive the runtime
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/out"
+          mkdir -p "$out"
+          tar -C /opt/jitsi-meet -czf "$out/prosody-runtime.tar.gz" app
+          sha256sum "$out/prosody-runtime.tar.gz"
+
+      - name: Upload runtime
+        uses: actions/upload-artifact@v4
+        with:
+          name: prosody-runtime
+          path: ${{ runner.temp }}/out/
+          if-no-files-found: error

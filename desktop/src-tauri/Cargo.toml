@@ -1,0 +1,16 @@
+[package]
+name = "jitsi-meet-desktop"
+version = "1.0.0"
+description = "A small desktop client for any Jitsi Meet server"
+authors = ["ppouria"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "=2.6.3", features = [] }
+
+[dependencies]
+tauri = { version = "=2.11.5", features = [] }
+
+[target.'cfg(windows)'.dependencies]
+webview2-com = "=0.38.2"
+windows = "=0.61.3"

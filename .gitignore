@@ -99,6 +99,7 @@ twa/*.aab
 twa/assetlinks.json
 
 tsconfig.json
+!desktop/tsconfig.json
 
 # React Native SDK
 #

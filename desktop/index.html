@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Jitsi Meet</title>
+    <script>
+      (function () {
+        try {
+          var theme = localStorage.getItem("jitsi-meet-desktop.theme");
+          var dark =
+            theme === "dark" ||
+            (theme !== "light" &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.classList.toggle("dark", dark);
+
+          var language = localStorage.getItem("jitsi-meet-desktop.language");
+          if (language !== "fa" && language !== "en") {
+            language = (navigator.language || "en").toLowerCase().indexOf("fa") === 0
+              ? "fa"
+              : "en";
+          }
+          document.documentElement.lang = language;
+          document.documentElement.dir = language === "fa" ? "rtl" : "ltr";
+        } catch (error) {
+          /* Storage can be unavailable in a locked-down WebView profile. */
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

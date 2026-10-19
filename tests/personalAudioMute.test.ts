@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { isIncomingPersonalAudioMuted } from '../react/features/filmstrip/personalAudioMute';
+import { isIncomingPersonalAudioMuted } from '../react/features/filmstrip/personalAudioMute.ts';
 
 assert.equal(isIncomingPersonalAudioMuted(), false);
 assert.equal(isIncomingPersonalAudioMuted({ forParticipant: true }), false);

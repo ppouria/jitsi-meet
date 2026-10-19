@@ -1,0 +1,71 @@
+# Builds the Jitsi Meet web bundle, the static files a browser loads, for the offline mirror.
+# Start it with `gh workflow run build-web-bundle.yml`. The bundle has no CPU architecture, so one runner is enough.
+name: build-web-bundle
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build web bundle
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Same build as `make` in the upstream CI. The output goes to libs/ and the top-level files.
+      - name: Build the web bundle
+        run: make
+
+      # The file list follows debian/jitsi-meet-web.install, the upstream package that serves the same files.
+      - name: Assemble the web root
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/jitsi-meet"
+          out="$RUNNER_TEMP/out"
+          mkdir -p "$root/css" "$root/resources" "$out"
+          cp -r libs static sounds fonts images lang "$root/"
+          cp ./*.html config.js interface_config.js pwa-worker.js manifest.json "$root/"
+          cp css/all.css "$root/css/"
+          cp resources/robots.txt "$root/resources/"
+          printf '%s\n' "$GITHUB_SHA" > "$root/BUILD_COMMIT"
+          node --check config.js
+          test -f "$root/index.html"
+          test -f "$root/libs/app.bundle.min.js"
+          test -f "$root/libs/external_api.min.js"
+          test -f "$root/css/all.css"
+          tar -C "$RUNNER_TEMP" -czf "$out/jitsi-meet-web.tar.gz" jitsi-meet
+          cd "$out"
+          sha256sum jitsi-meet-web.tar.gz > jitsi-meet-web.tar.gz.sha256
+          echo "### Web bundle" >> "$GITHUB_STEP_SUMMARY"
+          echo "- commit: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+          echo "- files in the archive: $(tar -tzf jitsi-meet-web.tar.gz | wc -l)" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: ${{ runner.temp }}/out/jitsi-meet-web.tar.gz
+
+      - name: Upload bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: jitsi-meet-web
+          path: ${{ runner.temp }}/out/
+          if-no-files-found: error

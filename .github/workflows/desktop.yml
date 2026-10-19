@@ -42,7 +42,7 @@ jobs:
             bundles: deb,appimage
             target: ''
           - name: macOS universal
-            os: macos-latest
+            os: macos-15-intel
             artifact: macos-universal
             bundles: app,dmg
             target: universal-apple-darwin

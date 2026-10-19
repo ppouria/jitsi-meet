@@ -124,7 +124,6 @@ const ThumbnailTopIndicators = ({
                     participantId = { participantId }
                     popoverVisible = { popoverVisible }
                     showPopover = { showPopover }
-                    statsPopoverPosition = { STATS_POPOVER_POSITION[thumbnailType] }
                     thumbnailType = { thumbnailType }
                     visible = { isHovered || Boolean(popoverVisible) } />
                 }

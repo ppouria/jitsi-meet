@@ -24,6 +24,8 @@ type settings struct {
 	Domain      string // XMPP domain for conferences, for example meet.local
 	AuthDomain  string // "auth." + Domain, where the focus and JVB accounts live
 	HTTPSListen string // address for the HTTPS listener, for example :443
+	TLSMode     string // internal: a CA made here issues the certificate; file: the installer copied one in; http: no TLS
+	HTTPListen  string // address used in http mode, for example :80
 	UDPPort     int    // Videobridge media port (ICE over UDP)
 }
 
@@ -37,6 +39,8 @@ func settingsFromEnv() (settings, error) {
 		PublicHost:  os.Getenv("JITSI_PUBLIC_HOST"),
 		Domain:      envOr("JITSI_XMPP_DOMAIN", "meet.local"),
 		HTTPSListen: envOr("JITSI_HTTPS_LISTEN", ":443"),
+		TLSMode:     envOr("JITSI_TLS", "internal"),
+		HTTPListen:  envOr("JITSI_HTTP_LISTEN", ":80"),
 	}
 	if !hostRe.MatchString(s.PublicHost) {
 		return s, fmt.Errorf("JITSI_PUBLIC_HOST must be a host name or IP address, got %q", s.PublicHost)
@@ -49,6 +53,9 @@ func settingsFromEnv() (settings, error) {
 		return s, fmt.Errorf("JITSI_UDP_PORT must be a port number")
 	}
 	s.UDPPort = port
+	if s.TLSMode != "internal" && s.TLSMode != "file" && s.TLSMode != "http" {
+		return s, fmt.Errorf("JITSI_TLS must be internal, file, or http, got %q", s.TLSMode)
+	}
 	s.AuthDomain = "auth." + s.Domain
 	return s, nil
 }
@@ -151,8 +158,12 @@ func renderTemplate(name string, data any) (string, error) {
 // patchConfigJS points the web app at this server. The upstream file names the example host in three
 // places: BOSH and websocket URLs (the public host) and the XMPP domain of the conference rooms.
 func patchConfigJS(src string, s settings) string {
-	out := strings.ReplaceAll(src, "https://jitsi-meet.example.com/", "https://"+s.PublicHost+"/")
-	out = strings.ReplaceAll(out, "wss://jitsi-meet.example.com/", "wss://"+s.PublicHost+"/")
+	web, ws := "https://", "wss://"
+	if s.TLSMode == "http" {
+		web, ws = "http://", "ws://"
+	}
+	out := strings.ReplaceAll(src, "https://jitsi-meet.example.com/", web+s.PublicHost+"/")
+	out = strings.ReplaceAll(out, "wss://jitsi-meet.example.com/", ws+s.PublicHost+"/")
 	out = strings.ReplaceAll(out, "jitsi-meet.example.com", s.Domain)
 	// Self-hosted installs have no account service. Empty turns the account flow off.
 	return strings.ReplaceAll(out, "accountServiceUrl: '/account/api'", "accountServiceUrl: ''")

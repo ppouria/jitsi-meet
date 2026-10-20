@@ -47,15 +47,27 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	caPath, err := ensureTLS(filepath.Join(data, "tls"), s.PublicHost)
-	if err != nil {
-		return fmt.Errorf("tls: %w", err)
+	var caPath string
+	switch s.TLSMode {
+	case "internal":
+		caPath, err = ensureTLS(filepath.Join(data, "tls"), s.PublicHost)
+		if err != nil {
+			return fmt.Errorf("tls: %w", err)
+		}
+	case "file":
+		for _, f := range []string{"server.crt", "server.key"} {
+			if _, err := os.Stat(filepath.Join(data, "tls", f)); err != nil {
+				return fmt.Errorf("tls file mode: %s is missing, the installer copies it there: %w", f, err)
+			}
+		}
 	}
 	prosodyCfg, jicofoCfg, jvbCfg, err := writeConfigs(s, sec, app, data)
 	if err != nil {
 		return fmt.Errorf("config: %w", err)
 	}
-	log.Printf("browsers that open the page must trust the CA certificate %s", caPath)
+	if caPath != "" {
+		log.Printf("browsers that open the page must trust the CA certificate %s", caPath)
+	}
 
 	env := runtimeEnv(app)
 	lua := filepath.Join(app, "lua", "bin", "lua")
@@ -118,12 +130,21 @@ func run() error {
 	}
 	httpsErr := make(chan error, 1)
 	go func() {
+		if s.TLSMode == "http" {
+			srv.Addr = s.HTTPListen
+			httpsErr <- srv.ListenAndServe()
+			return
+		}
 		httpsErr <- srv.ListenAndServeTLS(filepath.Join(data, "tls", "server.crt"), filepath.Join(data, "tls", "server.key"))
 	}()
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
-	log.Printf("Jitsi Meet is starting at https://%s%s/ (XMPP domain %s)", s.PublicHost, s.HTTPSListen, s.Domain)
+	scheme := "https"
+	if s.TLSMode == "http" {
+		scheme = "http"
+	}
+	log.Printf("Jitsi Meet is starting at %s://%s/ (XMPP domain %s, TLS %s)", scheme, s.PublicHost, s.Domain, s.TLSMode)
 	select {
 	case <-ctx.Done():
 		log.Print("stopping")

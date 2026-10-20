@@ -1,5 +1,10 @@
 // Written by jitsi-meet-server at every start.
 videobridge {
+  http-servers {
+    private {
+      port = 8091
+    }
+  }
   ice {
     udp {
       port = {{.UDPPort}}

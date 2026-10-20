@@ -203,3 +203,13 @@ subscription_request = st.presence({
 	from = module:get_host()}
 )
 module:send(subscription_request)
+
+-- The target may be offline when this module loads. Then Prosody answers the subscription with an error,
+-- so subscribe again every 5 seconds until the target's presence registers a session.
+-- shortcut: the retry stops after the first session, so a later focus restart is not subscribed again; upgrade when focus restarts are common.
+module:add_timer(5, function()
+	if #sessions == 0 then
+		module:send(st.presence({ type = "subscribe", to = target_address, from = module:get_host() }));
+		return 5;
+	end
+end);

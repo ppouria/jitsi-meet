@@ -10,7 +10,7 @@ permissions:
 
 env:
   # Commits of the forks that the server is built from. Change them to build a newer fork state.
-  JICOFO_REF: 120b2bc3936df4db4699e658020a4c66c103ef0a
+  JICOFO_REF: a80471dd399fa3fd3f6762766fcc86ae72b239f6
   JVB_REF: 1d38eed61e0ad4b9cdd2069202b5d3b22fdc0903
 
 jobs:

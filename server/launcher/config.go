@@ -153,5 +153,7 @@ func renderTemplate(name string, data any) (string, error) {
 func patchConfigJS(src string, s settings) string {
 	out := strings.ReplaceAll(src, "https://jitsi-meet.example.com/", "https://"+s.PublicHost+"/")
 	out = strings.ReplaceAll(out, "wss://jitsi-meet.example.com/", "wss://"+s.PublicHost+"/")
-	return strings.ReplaceAll(out, "jitsi-meet.example.com", s.Domain)
+	out = strings.ReplaceAll(out, "jitsi-meet.example.com", s.Domain)
+	// Self-hosted installs have no account service. Empty turns the account flow off.
+	return strings.ReplaceAll(out, "accountServiceUrl: '/account/api'", "accountServiceUrl: ''")
 }

@@ -125,3 +125,6 @@ react-native-sdk/sounds
 tests/.env
 test-results
 
+
+# The server launcher embeds this archive; the build creates it, so it is never committed.
+server/launcher/payload.tar.gz

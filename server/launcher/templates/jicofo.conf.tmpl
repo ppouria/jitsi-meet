@@ -1,0 +1,26 @@
+// Written by jitsi-meet-server at every start.
+jicofo {
+  xmpp {
+    client {
+      hostname = "127.0.0.1"
+      port = 5222
+      domain = "{{.AuthDomain}}"
+      xmpp-domain = "{{.Domain}}"
+      username = "focus"
+      password = "{{.FocusPassword}}"
+      conference-muc-jid = "conference.{{.Domain}}"
+      client-proxy = "focus.{{.Domain}}"
+    }
+    service {
+      hostname = "127.0.0.1"
+      port = 5222
+      domain = "{{.AuthDomain}}"
+      xmpp-domain = "{{.Domain}}"
+      username = "focus"
+      password = "{{.FocusPassword}}"
+    }
+  }
+  bridge {
+    brewery-jid = "JvbBrewery@internal.{{.AuthDomain}}"
+  }
+}

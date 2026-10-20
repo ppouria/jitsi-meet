@@ -1,0 +1,24 @@
+// Written by jitsi-meet-server at every start.
+videobridge {
+  ice {
+    udp {
+      port = {{.UDPPort}}
+    }
+  }
+  apis {
+    xmpp-client {
+      configs {
+        xmpp-server-1 {
+          HOSTNAME = "127.0.0.1"
+          PORT = 5222
+          DOMAIN = "{{.AuthDomain}}"
+          USERNAME = "jvb"
+          PASSWORD = "{{.JVBPassword}}"
+          MUC_JIDS = "JvbBrewery@internal.{{.AuthDomain}}"
+          MUC_NICKNAME = "jvb-1"
+          DISABLE_CERTIFICATE_VERIFICATION = true
+        }
+      }
+    }
+  }
+}

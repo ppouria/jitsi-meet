@@ -1,0 +1,134 @@
+-- Written by jitsi-meet-server at every start. Change the launcher, not this file.
+-- The layout follows doc/debian/jitsi-meet-prosody/prosody.cfg.lua-jvb.example, without TLS
+-- (the launcher terminates HTTPS) and without the TURN settings (no TURN server is installed).
+
+plugin_paths = { "{{.AppDir}}/prosody-plugins/" }
+data_path = "{{.DataDir}}/prosody"
+log = { { levels = { min = "info" }, to = "console" } }
+
+-- Only the launcher's proxy reaches these ports, so every listener stays on loopback.
+http_ports = { 5280 }
+https_ports = {}
+http_interfaces = { "127.0.0.1" }
+c2s_interfaces = { "127.0.0.1" }
+component_interfaces = { "127.0.0.1" }
+allow_unencrypted_plain_auth = true
+consider_bosh_secure = true
+consider_websocket_secure = true
+cross_domain_bosh = false
+
+-- We need this for prosody 13.0.
+component_admins_as_room_owners = true
+muc_mapper_domain_base = "{{.Domain}}"
+unlimited_jids = { "focus@{{.AuthDomain}}", "jvb@{{.AuthDomain}}" }
+
+smacks_max_unacked_stanzas = 5
+smacks_hibernation_time = 60
+smacks_max_old_sessions = 1
+
+VirtualHost "{{.Domain}}"
+    authentication = "jitsi-anonymous"
+    modules_enabled = {
+        "bosh";
+        "websocket";
+        "smacks";
+        "ping";
+        "features_identity";
+        "conference_duration";
+        "muc_password_check";
+        "muc_lobby_rooms";
+        "muc_breakout_rooms";
+        "filter_direct_messages";
+    }
+    c2s_require_encryption = false
+    lobby_muc = "lobby.{{.Domain}}"
+    breakout_rooms_muc = "breakout.{{.Domain}}"
+    main_muc = "conference.{{.Domain}}"
+    admins = { "focus@{{.AuthDomain}}" }
+
+Component "conference.{{.Domain}}" "muc"
+    restrict_room_creation = true
+    storage = "memory"
+    modules_enabled = {
+        "muc_hide_all";
+        "muc_meeting_id";
+        "muc_domain_mapper";
+        "muc_flip";
+        "muc_rate_limit";
+        "muc_password_whitelist";
+    }
+    admins = { "focus@{{.AuthDomain}}" }
+    muc_password_whitelist = { "focus@{{.AuthDomain}}" }
+    muc_room_locking = false
+    muc_room_default_public_jids = true
+
+Component "breakout.{{.Domain}}" "muc"
+    restrict_room_creation = true
+    storage = "memory"
+    modules_enabled = {
+        "muc_hide_all";
+        "muc_meeting_id";
+        "muc_domain_mapper";
+        "muc_rate_limit";
+    }
+    admins = { "focus@{{.AuthDomain}}" }
+    muc_room_locking = false
+    muc_room_default_public_jids = true
+
+-- The internal MUC holds the JVB brewery room. Only accounts on the auth domain can join it.
+Component "internal.{{.AuthDomain}}" "muc"
+    storage = "memory"
+    modules_enabled = {
+        "muc_hide_all";
+        "muc_filter_access";
+        "ping";
+    }
+    muc_filter_whitelist = { "{{.AuthDomain}}" }
+    admins = { "focus@{{.AuthDomain}}", "jvb@{{.AuthDomain}}" }
+    muc_room_locking = false
+    muc_room_default_public_jids = true
+
+VirtualHost "{{.AuthDomain}}"
+    modules_enabled = {
+        "limits_exception";
+        "smacks";
+    }
+    authentication = "internal_hashed"
+    smacks_hibernation_time = 15;
+
+VirtualHost "recorder.{{.Domain}}"
+    modules_enabled = {
+        "smacks";
+    }
+    authentication = "internal_hashed"
+    smacks_max_old_sessions = 2000;
+
+-- Lets clients address Jicofo through one JID, so Jicofo does not register as a component.
+Component "focus.{{.Domain}}" "client_proxy"
+    target_address = "focus@{{.AuthDomain}}"
+
+Component "speakerstats.{{.Domain}}" "speakerstats_component"
+    muc_component = "conference.{{.Domain}}"
+
+Component "endconference.{{.Domain}}" "end_conference"
+    muc_component = "conference.{{.Domain}}"
+
+Component "avmoderation.{{.Domain}}" "av_moderation_component"
+    muc_component = "conference.{{.Domain}}"
+
+Component "filesharing.{{.Domain}}" "filesharing_component"
+    muc_component = "conference.{{.Domain}}"
+
+Component "lobby.{{.Domain}}" "muc"
+    storage = "memory"
+    restrict_room_creation = true
+    muc_room_locking = false
+    muc_room_default_public_jids = true
+    modules_enabled = {
+        "muc_hide_all";
+        "muc_rate_limit";
+    }
+
+Component "metadata.{{.Domain}}" "room_metadata_component"
+    muc_component = "conference.{{.Domain}}"
+    breakout_rooms_component = "breakout.{{.Domain}}"

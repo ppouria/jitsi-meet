@@ -1,0 +1,163 @@
+# Builds the whole Jitsi Meet server as one binary: the web app, Lua and Prosody, Jicofo, Videobridge,
+# and a Java runtime, all inside jitsi-meet-server. Start it with `gh workflow run build-server.yml`.
+name: build-server
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Commits of the forks that the server is built from. Change them to build a newer fork state.
+  JICOFO_REF: 120b2bc3936df4db4699e658020a4c66c103ef0a
+  JVB_REF: 1d38eed61e0ad4b9cdd2069202b5d3b22fdc0903
+
+jobs:
+  build:
+    name: build server
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Checkout Jicofo
+        uses: actions/checkout@v4
+        with:
+          repository: ppouria/jicofo
+          ref: ${{ env.JICOFO_REF }}
+          path: jicofo
+
+      - name: Checkout Videobridge
+        uses: actions/checkout@v4
+        with:
+          repository: ppouria/jitsi-videobridge
+          ref: ${{ env.JVB_REF }}
+          path: jvb
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Build Jicofo and Videobridge
+        run: |
+          set -euo pipefail
+          (cd jicofo && mvn -B -ntp -DskipTests install)
+          (cd jvb && mvn -B -ntp -DskipTests install)
+
+      - name: Build the Lua and Prosody runtime
+        run: bash server/scripts/build-prosody.sh
+
+      - name: Stage Jicofo and Videobridge
+        run: |
+          set -euo pipefail
+          app=/opt/jitsi-meet/app
+          stage() {
+              # $1: the module's archive, $2: destination folder under app/
+              tmp=$(mktemp -d)
+              unzip -q "$1" -d "$tmp"
+              rm -rf "$app/$2"
+              mv "$tmp"/*/ "$app/$2"
+              rm -rf "$tmp"
+          }
+          stage "$(ls jicofo/jicofo/target/*-archive.zip | head -1)" jicofo
+          stage "$(ls jvb/jvb/target/*-archive.zip | head -1)" jvb
+          test -f "$app/jicofo/jicofo.jar"
+          test -f "$app/jvb/jitsi-videobridge.jar"
+
+      - name: Build the Java runtime with jlink
+        run: |
+          set -euo pipefail
+          app=/opt/jitsi-meet/app
+          cp_list=$(find "$app/jicofo" "$app/jvb" -name '*.jar' | paste -sd: -)
+          # The modules that the two servers need, plus the ones the JDK loads by name at run time.
+          mods=$(jdeps --multi-release 17 --ignore-missing-deps --print-module-deps -cp "$cp_list" \
+              "$app/jicofo/jicofo.jar" "$app/jvb/jitsi-videobridge.jar")
+          mods="$mods,java.naming,java.management,java.sql,jdk.crypto.ec,jdk.unsupported,java.logging"
+          echo "modules: $mods"
+          jlink --add-modules "$mods" --strip-debug --no-header-files --no-man-pages \
+              --compress=zip-6 --output "$app/jre"
+          "$app/jre/bin/java" -version
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Same build as `make` in the upstream CI. The output goes to libs/ and the top-level files.
+      - name: Build the web bundle
+        run: make
+
+      # The file list follows debian/jitsi-meet-web.install, the upstream package that serves the same files.
+      - name: Stage the web app and the Prosody plugins
+        run: |
+          set -euo pipefail
+          app=/opt/jitsi-meet/app
+          web="$app/web"
+          rm -rf "$web"
+          mkdir -p "$web/css" "$web/resources"
+          cp -r libs static sounds fonts images lang "$web/"
+          cp ./*.html config.js interface_config.js pwa-worker.js manifest.json "$web/"
+          cp css/all.css "$web/css/"
+          cp resources/robots.txt "$web/resources/"
+          printf '%s\n' "$GITHUB_SHA" > "$web/BUILD_COMMIT"
+          node --check config.js
+          # The launcher writes config.js for the install from this copy, so the upstream file stays as it is.
+          cp config.js "$web/config.js.orig"
+          test -f "$web/libs/app.bundle.min.js"
+          test -f "$web/libs/external_api.min.js"
+          rm -rf "$app/prosody-plugins"
+          cp -r resources/prosody-plugins "$app/prosody-plugins"
+          test -f "$app/prosody-plugins/mod_auth_token.lua"
+
+      - name: Package the runtime into the launcher
+        run: |
+          set -euo pipefail
+          tar -C /opt/jitsi-meet -czf "$GITHUB_WORKSPACE/server/launcher/payload.tar.gz" app
+          ls -l "$GITHUB_WORKSPACE/server/launcher/payload.tar.gz"
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: server/launcher/go.mod
+
+      - name: Test and build the launcher
+        working-directory: server/launcher
+        run: |
+          set -euo pipefail
+          go test -count=1 ./...
+          out="$RUNNER_TEMP/out"
+          mkdir -p "$out"
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o "$out/jitsi-meet-server" .
+          cd "$out"
+          sha256sum jitsi-meet-server > jitsi-meet-server.sha256
+          {
+            echo "### Jitsi Meet server"
+            echo "- commit: $GITHUB_SHA"
+            echo "- Jicofo: $JICOFO_REF"
+            echo "- Videobridge: $JVB_REF"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: ${{ runner.temp }}/out/jitsi-meet-server
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: jitsi-meet-server-linux-amd64
+          path: ${{ runner.temp }}/out/
+          if-no-files-found: error

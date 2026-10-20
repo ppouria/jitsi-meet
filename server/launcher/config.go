@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -155,6 +156,20 @@ func renderTemplate(name string, data any) (string, error) {
 	return buf.String(), nil
 }
 
+// publicOrigin is the host that browsers use, with the port when the listener does not use the default port
+// (443 for HTTPS, 80 for http mode). Without the port, the browser would call the wrong address.
+func publicOrigin(s settings) string {
+	listen, def := s.HTTPSListen, "443"
+	if s.TLSMode == "http" {
+		listen, def = s.HTTPListen, "80"
+	}
+	_, port, err := net.SplitHostPort(listen)
+	if err != nil || port == def {
+		return s.PublicHost
+	}
+	return s.PublicHost + ":" + port
+}
+
 // patchConfigJS points the web app at this server. The upstream file names the example host in three
 // places: BOSH and websocket URLs (the public host) and the XMPP domain of the conference rooms.
 func patchConfigJS(src string, s settings) string {
@@ -162,8 +177,9 @@ func patchConfigJS(src string, s settings) string {
 	if s.TLSMode == "http" {
 		web, ws = "http://", "ws://"
 	}
-	out := strings.ReplaceAll(src, "https://jitsi-meet.example.com/", web+s.PublicHost+"/")
-	out = strings.ReplaceAll(out, "wss://jitsi-meet.example.com/", ws+s.PublicHost+"/")
+	origin := publicOrigin(s)
+	out := strings.ReplaceAll(src, "https://jitsi-meet.example.com/", web+origin+"/")
+	out = strings.ReplaceAll(out, "wss://jitsi-meet.example.com/", ws+origin+"/")
 	out = strings.ReplaceAll(out, "jitsi-meet.example.com", s.Domain)
 	// Self-hosted installs have no account service. Empty turns the account flow off.
 	return strings.ReplaceAll(out, "accountServiceUrl: '/account/api'", "accountServiceUrl: ''")

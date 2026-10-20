@@ -144,7 +144,7 @@ func run() error {
 	if s.TLSMode == "http" {
 		scheme = "http"
 	}
-	log.Printf("Jitsi Meet is starting at %s://%s/ (XMPP domain %s, TLS %s)", scheme, s.PublicHost, s.Domain, s.TLSMode)
+	log.Printf("Jitsi Meet is starting at %s://%s/ (XMPP domain %s, TLS %s)", scheme, publicOrigin(s), s.Domain, s.TLSMode)
 	select {
 	case <-ctx.Done():
 		log.Print("stopping")

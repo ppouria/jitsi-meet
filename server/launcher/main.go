@@ -1,6 +1,6 @@
 // Command jitsi-meet-server runs a complete Jitsi Meet server from one binary: Prosody (XMPP), Jicofo
-// (the conference focus), Videobridge (the media server) and the web app behind HTTPS. It runs as root,
-// because it binds the HTTPS port and writes under installRoot. Settings come from the environment.
+// (the conference focus), Videobridge (the media server) and the web app behind HTTPS. It runs as the
+// jitsi-meet user, which systemd gives the right to bind port 443. Settings come from the environment.
 package main
 
 import (
@@ -28,8 +28,8 @@ func main() {
 }
 
 func run() error {
-	if os.Geteuid() != 0 {
-		return fmt.Errorf("run as root: the install folder and the HTTPS port need it")
+	if os.Geteuid() == 0 {
+		return fmt.Errorf("run as the jitsi-meet user, not as root: Prosody refuses to start as root")
 	}
 	s, err := settingsFromEnv()
 	if err != nil {

@@ -104,7 +104,8 @@ type templateData struct {
 // writeConfigs renders the three server configs into dir and patches the web app's config.js.
 func writeConfigs(s settings, sec *secrets, appDir, dataDir string) (prosodyCfg, jicofoCfg, jvbCfg string, err error) {
 	conf := filepath.Join(dataDir, "conf")
-	if err := os.MkdirAll(conf, 0o755); err != nil {
+	// Prosody looks for its certs folder even when it serves no TLS, so it is created here.
+	if err := os.MkdirAll(filepath.Join(conf, "certs"), 0o755); err != nil {
 		return "", "", "", err
 	}
 	d := templateData{settings: s, AppDir: appDir, DataDir: dataDir, FocusPassword: sec.FocusPassword, JVBPassword: sec.JVBPassword}

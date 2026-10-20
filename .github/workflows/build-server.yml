@@ -81,10 +81,10 @@ jobs:
           # The modules that the two servers need, plus the ones the JDK loads by name at run time.
           mods=$(jdeps --multi-release 17 --ignore-missing-deps --print-module-deps -cp "$cp_list" \
               "$app/jicofo/jicofo.jar" "$app/jvb/jitsi-videobridge.jar")
-          mods="$mods,java.naming,java.management,java.sql,jdk.crypto.ec,jdk.unsupported,java.logging"
+          mods=$(echo "$mods,java.naming,java.management,java.sql,jdk.crypto.ec,jdk.unsupported,java.logging" | tr "," "\n" | sort -u | paste -sd, -)
           echo "modules: $mods"
           jlink --add-modules "$mods" --strip-debug --no-header-files --no-man-pages \
-              --compress=zip-6 --output "$app/jre"
+              --compress=2 --output "$app/jre"
           "$app/jre/bin/java" -version
 
       - name: Setup Node.js
